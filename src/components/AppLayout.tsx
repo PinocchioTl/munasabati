@@ -130,7 +130,7 @@ export function AppLayout() {
       {/* Main */}
       <main className="flex-1 min-w-0 flex flex-col">
         {/* Topbar */}
-        <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border">
+        <header className="sticky top-0 z-30 glass border-b border-border/60">
           <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 lg:px-8 h-14 sm:h-16">
             <div className="md:hidden flex items-center gap-2 min-w-0">
               <div className="size-9 rounded-xl bg-gradient-gold flex items-center justify-center overflow-hidden shrink-0">
@@ -175,7 +175,7 @@ export function AppLayout() {
       </main>
 
       {/* Mobile bottom nav (hidden on md+) */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-card/95 backdrop-blur-xl border-t border-border safe-area-inset">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 glass border-t border-border/60 safe-area-inset">
         <div className="grid grid-cols-5 px-1 py-1.5">
           {mobilePrimary.map((to) => {
             const item = navItems.find((n) => n.to === to)!;
