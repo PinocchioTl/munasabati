@@ -715,7 +715,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
-      booking_status: "pending" | "confirmed" | "completed" | "cancelled"
+      booking_status:
+        | "pending"
+        | "confirmed"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
       event_type: "wedding" | "engagement" | "birthday" | "other"
       item_status: "available" | "limited" | "unavailable"
       notif_level: "info" | "warning" | "success" | "error"
@@ -848,7 +853,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
-      booking_status: ["pending", "confirmed", "completed", "cancelled"],
+      booking_status: [
+        "pending",
+        "confirmed",
+        "in_progress",
+        "completed",
+        "cancelled",
+      ],
       event_type: ["wedding", "engagement", "birthday", "other"],
       item_status: ["available", "limited", "unavailable"],
       notif_level: ["info", "warning", "success", "error"],
