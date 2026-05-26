@@ -1,0 +1,1 @@
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS transport_cost NUMERIC NOT NULL DEFAULT 0;

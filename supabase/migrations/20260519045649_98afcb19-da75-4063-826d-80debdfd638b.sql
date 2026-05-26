@@ -1,0 +1,1 @@
+ALTER TABLE public.supplies ADD COLUMN IF NOT EXISTS notes text;
