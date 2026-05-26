@@ -4,7 +4,7 @@ import { Inbox, Loader2 } from "lucide-react";
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`bg-card rounded-2xl border border-border shadow-soft ${className}`}>
+    <div className={`bg-card rounded-2xl border border-border/70 shadow-elegant hover-lift ${className}`}>
       {children}
     </div>
   );
