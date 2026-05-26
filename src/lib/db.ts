@@ -435,9 +435,8 @@ export const useUpdateDecoration = () => {
 
       const { data: before } = await supabase.from("decorations").select("*").eq("id", input.id).single();
       if (!before) throw new Error("الديكور غير موجود");
-      if (input.total_qty < (before as any).booked_qty) {
-        throw new Error(`لا يمكن تقليل الكمية لأقل من المحجوز (${(before as any).booked_qty})`);
-      }
+      // Rental model: booked_qty is informational (active bookings across all dates).
+      // Reducing total_qty is always allowed; per-date conflicts are checked at booking time.
 
       const { data, error } = await supabase.from("decorations").update({
         name,
