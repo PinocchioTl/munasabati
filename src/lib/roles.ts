@@ -32,4 +32,4 @@ export async function logAudit(action: string, entity?: string, entityId?: strin
   });
 }
 
-export const DEV_ADMIN_EMAIL = "admin@local";
+export const DEV_ADMIN_EMAIL = "admin@local.com";

@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export const DEMO_EMAIL = "admin@local";
+export const DEMO_EMAIL = "admin@local.com";
 
 export function isDemoUser(email?: string | null) {
   return (email || "").toLowerCase() === DEMO_EMAIL;
