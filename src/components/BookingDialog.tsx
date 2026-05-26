@@ -129,6 +129,33 @@ export function BookingDialog({ open, onClose, booking }: Props) {
 
   const grandTotal = form.total_price > 0 ? form.total_price : autoTotal;
 
+  // Live conflict detection — recomputed on every selection/date change
+  const conflicts = useMemo(() => {
+    if (!form.event_date) return [] as { name: string; requested: number; available: number; kind: "decoration" | "supply" }[];
+    const out: { name: string; requested: number; available: number; kind: "decoration" | "supply" }[] = [];
+    for (const [id, sel] of Object.entries(selectedDecs)) {
+      const dec = decorations.find((d) => d.id === id);
+      if (!dec) continue;
+      const used = bookings
+        .filter((b) => b.event_date === form.event_date
+          && (b.status === "pending" || b.status === "confirmed" || b.status === "in_progress")
+          && b.id !== booking?.id)
+        .flatMap((b) => b.booking_decorations || [])
+        .filter((bd) => bd.decoration_id === dec.id)
+        .reduce((s, bd) => s + bd.qty, 0);
+      const avail = Math.max(dec.total_qty - used, 0);
+      if (sel.qty > avail) out.push({ name: dec.name, requested: sel.qty, available: avail, kind: "decoration" });
+    }
+    for (const [id, sel] of Object.entries(selectedSups)) {
+      const sup = supplies.find((s) => s.id === id);
+      if (!sup) continue;
+      const avail = supplyAvailableOnDate(sup, form.event_date, bookings, booking?.id);
+      if (sel.qty > avail) out.push({ name: sup.name, requested: sel.qty, available: avail, kind: "supply" });
+    }
+    return out;
+  }, [selectedDecs, selectedSups, decorations, supplies, bookings, form.event_date, booking?.id]);
+  const hasConflicts = conflicts.length > 0;
+
   if (!open) return null;
 
   const set = (k: keyof typeof form) => (e: any) =>
