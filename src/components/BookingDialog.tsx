@@ -408,10 +408,10 @@ export function BookingDialog({ open, onClose, booking }: Props) {
                     value={form.total_price || ""}
                     onChange={(e) => { setPriceTouched(true); set("total_price")(e); }}
                   />
-                  {priceTouched && (Object.keys(selectedDecs).length > 0 || form.transport_cost > 0) && (
+                  {priceTouched && (Object.keys(selectedDecs).length > 0 || Object.keys(selectedSups).length > 0 || form.transport_cost > 0) && (
                     <button
                       type="button"
-                      onClick={() => { setPriceTouched(false); setForm((f) => ({ ...f, total_price: decorationsSubtotal + (+f.transport_cost || 0) })); }}
+                      onClick={() => { setPriceTouched(false); setForm((f) => ({ ...f, total_price: autoTotal })); }}
                       className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-gold bg-gold/10 px-2 py-1 rounded-md hover:bg-gold/20"
                       title="مزامنة تلقائية"
                     >
@@ -426,13 +426,14 @@ export function BookingDialog({ open, onClose, booking }: Props) {
           </Section>
 
           {/* 📊 Booking Summary */}
-          {(decorationsSubtotal > 0 || form.transport_cost > 0 || form.total_price > 0) && (
+          {(decorationsSubtotal > 0 || suppliesSubtotal > 0 || form.transport_cost > 0 || form.total_price > 0) && (
             <div className="bg-gradient-to-br from-gold/10 via-card to-info/5 border border-gold/30 rounded-2xl p-5 space-y-3">
               <div className="flex items-center gap-2 text-sm font-bold">
                 <Receipt className="size-4 text-gold" /> ملخص الحجز
               </div>
               <div className="space-y-2 text-sm">
                 <SummaryRow label="مجموع الديكورات" value={formatSAR(decorationsSubtotal)} />
+                <SummaryRow label="مجموع المستلزمات" value={formatSAR(suppliesSubtotal)} />
                 <SummaryRow label="تكلفة النقل" value={formatSAR(+form.transport_cost || 0)} />
                 {form.expenses > 0 && <SummaryRow label="مصاريف أخرى" value={`- ${formatSAR(form.expenses)}`} muted />}
                 <div className="h-px bg-border my-2" />
