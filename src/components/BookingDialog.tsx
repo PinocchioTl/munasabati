@@ -110,14 +110,24 @@ export function BookingDialog({ open, onClose, booking }: Props) {
     }, 0);
   }, [selectedDecs, decorations]);
 
-  // Auto-sync total_price from decorations + transport when user hasn't manually overridden
+  // Compute supplies subtotal (qty * cost per rental unit)
+  const suppliesSubtotal = useMemo(() => {
+    return Object.entries(selectedSups).reduce((sum, [id, sel]) => {
+      const sup = supplies.find((s) => s.id === id);
+      return sum + +(sup?.cost || 0) * sel.qty;
+    }, 0);
+  }, [selectedSups, supplies]);
+
+  const autoTotal = decorationsSubtotal + suppliesSubtotal + (+form.transport_cost || 0);
+
+  // Auto-sync total_price from decorations + supplies + transport when user hasn't manually overridden
   useEffect(() => {
     if (!priceTouched) {
-      setForm((f) => ({ ...f, total_price: decorationsSubtotal + (+f.transport_cost || 0) }));
+      setForm((f) => ({ ...f, total_price: autoTotal }));
     }
-  }, [decorationsSubtotal, priceTouched, form.transport_cost]);
+  }, [autoTotal, priceTouched]);
 
-  const grandTotal = form.total_price > 0 ? form.total_price : decorationsSubtotal + (+form.transport_cost || 0);
+  const grandTotal = form.total_price > 0 ? form.total_price : autoTotal;
 
   if (!open) return null;
 
