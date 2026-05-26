@@ -533,9 +533,31 @@ export function BookingDialog({ open, onClose, booking }: Props) {
 
           {/* Sticky footer actions */}
           <div className="sticky bottom-0 -mx-5 sm:-mx-7 -mb-5 sm:-mb-7 px-5 sm:px-7 py-4 bg-card/95 backdrop-blur-xl border-t border-border flex gap-2">
+            {hasConflicts && (
+              <div className="absolute -top-px left-0 right-0 -translate-y-full px-5 sm:px-7 pb-3 pointer-events-none">
+                <div className="bg-destructive/10 border border-destructive/40 rounded-2xl p-3 sm:p-4 shadow-lg pointer-events-auto animate-fade-in">
+                  <div className="flex items-start gap-2 text-destructive font-bold text-sm">
+                    <AlertCircle className="size-5 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <div>⚠️ يوجد تعارض في الحجز — لا يمكن الحفظ</div>
+                      <ul className="mt-2 space-y-1 text-xs font-semibold text-destructive/90 list-disc pr-5">
+                        {conflicts.map((c, i) => (
+                          <li key={i}>
+                            {c.kind === "decoration" ? "الديكور" : "المستلزم"} "{c.name}" — مطلوب {c.requested}، المتاح في {form.event_date}: {c.available}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-2 text-[11px] font-normal text-destructive/80">
+                        💡 جرّب: تغيير التاريخ، تقليل الكمية، أو اختيار عنصر بديل.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">إلغاء</Button>
-            <Button type="submit" variant="gold" loading={loading} className="flex-1">
-              {isEdit ? <><Check className="size-4" /> حفظ التعديلات</> : <><Plus className="size-4" /> إنشاء الحجز</>}
+            <Button type="submit" variant="gold" loading={loading} disabled={hasConflicts} className="flex-1">
+              {hasConflicts ? <><AlertCircle className="size-4" /> يوجد تعارض</> : isEdit ? <><Check className="size-4" /> حفظ التعديلات</> : <><Plus className="size-4" /> إنشاء الحجز</>}
             </Button>
           </div>
         </form>
