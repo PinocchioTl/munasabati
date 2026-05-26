@@ -189,16 +189,16 @@
     color: transparent;
   }
   .bg-gradient-luxury {
-    background: linear-gradient(165deg, oklch(0.22 0.04 257) 0%, oklch(0.15 0.035 260) 100%);
+    background: linear-gradient(165deg, oklch(0.31 0.13 18) 0%, oklch(0.22 0.1 18) 100%);
   }
   .bg-gradient-gold {
-    background: linear-gradient(135deg, oklch(0.8 0.1 82) 0%, oklch(0.68 0.09 72) 100%);
+    background: linear-gradient(135deg, oklch(0.84 0.13 88) 0%, oklch(0.72 0.13 80) 100%);
   }
   .bg-gradient-primary {
-    background: linear-gradient(135deg, oklch(0.24 0.045 257) 0%, oklch(0.16 0.035 260) 100%);
+    background: linear-gradient(135deg, oklch(0.34 0.13 18) 0%, oklch(0.24 0.11 18) 100%);
   }
   .bg-gradient-surface {
-    background: linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.985 0.003 247) 100%);
+    background: linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.98 0.004 50) 100%);
   }
   .glass {
     background: oklch(1 0 0 / 0.72);
