@@ -836,9 +836,11 @@ export const tierLabels: Record<ClientTier, string> = {
 // ============ IMAGE UPLOAD ============
 export async function uploadItemImages(files: File[]): Promise<string[]> {
   const urls: string[] = [];
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("يجب تسجيل الدخول لرفع الصور");
   for (const file of files) {
     const ext = file.name.split(".").pop() || "jpg";
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const { error } = await supabase.storage.from("item-images").upload(path, file, {
       cacheControl: "3600", upsert: false,
     });
