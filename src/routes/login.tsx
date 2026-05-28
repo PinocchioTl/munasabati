@@ -42,7 +42,7 @@ function LoginPage() {
 
   return (
     <AuthShell
-      title="مرحباً بعودتك"
+      title="مرحباً بك"
       subtitle="سجل الدخول لإدارة أعراسك ومناسباتك"
       footer={<>ليس لديك حساب؟ <Link to="/signup" className="font-semibold text-foreground hover:text-gold">أنشئ حساباً جديداً</Link></>}
     >
