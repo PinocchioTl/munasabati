@@ -3,8 +3,7 @@ import { Card, SectionHeader, Button } from "@/components/ui-bits";
 import {
   Bell, Palette, Database, Shield, Search, Crown, Moon, Sun, Type, Layout,
   Download, Upload, History, RefreshCw, Lock, KeyRound, LogOut, EyeOff,
-  AlertTriangle, Clock, Package, Wallet, Check, Sparkles, Plug,
-  MessageCircle, MapPin, CalendarDays, Mail,
+  AlertTriangle, Clock, Package, Wallet, Check, Sparkles,
 } from "lucide-react";
 import { useState, useEffect, useMemo, ReactNode } from "react";
 import { toast } from "sonner";
@@ -16,12 +15,11 @@ export const Route = createFileRoute("/_main/settings")({
   component: SettingsPage,
 });
 
-type SectionId = "branding" | "notifications" | "integrations" | "appearance" | "backup" | "security";
+type SectionId = "branding" | "notifications" | "appearance" | "backup" | "security";
 
 const sections: { id: SectionId; label: string; icon: typeof Bell; color: string; bg: string; desc: string }[] = [
   { id: "branding",      label: "الهوية البصرية", icon: Sparkles, color: "text-gold", bg: "bg-gold/10", desc: "شعار الشركة، الاسم، الألوان" },
   { id: "notifications", label: "الإشعارات", icon: Bell, color: "text-warning", bg: "bg-warning/10", desc: "تنبيهات المناسبات والمخزون والدفعات" },
-  { id: "integrations",  label: "التكاملات", icon: Plug, color: "text-info", bg: "bg-info/10", desc: "واتساب، خرائط، تقويم، بريد" },
   { id: "appearance",    label: "المظهر",    icon: Palette, color: "text-info",    bg: "bg-info/10",    desc: "الوضع الليلي، الألوان، حجم الخط" },
   { id: "backup",        label: "النسخ الاحتياطي", icon: Database, color: "text-success", bg: "bg-success/10", desc: "تصدير، استيراد، نسخ تلقائي" },
   { id: "security",      label: "الأمان",    icon: Shield, color: "text-destructive", bg: "bg-destructive/10", desc: "كلمة المرور، PIN، جلسات الدخول" },
@@ -121,7 +119,6 @@ function SettingsPage() {
         <div className="animate-fade-in min-w-0" key={active}>
           {active === "branding" && <BrandingSettings />}
           {active === "notifications" && <NotificationsSection />}
-          {active === "integrations" && <IntegrationsSection />}
           {active === "appearance" && <AppearanceSection />}
           {active === "backup" && <BackupSection />}
           {active === "security" && <SecuritySection />}
