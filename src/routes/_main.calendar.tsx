@@ -15,9 +15,12 @@ export const Route = createFileRoute("/_main/calendar")({
 });
 
 const monthNames = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
-const dayNames = ["السبت","الجمعة","الخميس","الأربعاء","الثلاثاء","الإثنين","الأحد"]; // RTL visual order
-const dayNamesShort = ["سبت","جمعة","خميس","أربعاء","ثلاثاء","إثنين","أحد"];
 const fullDayNames = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+const shortDayNames = ["أحد","إثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"];
+const WEEKDAY_ORDER = [6, 0, 1, 2, 3, 4, 5] as const; // السبت → الجمعة، مبني على Date.getDay()
+type WeekdayNumber = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+type CalendarCell = { date: Date; iso: string; day: number; weekDay: WeekdayNumber } | null;
+const dayNames = WEEKDAY_ORDER.map((day) => fullDayNames[day]);
 
 // ألوان الحالات: مؤكد أخضر، انتظار أصفر، جاري التنفيذ أزرق، مكتمل بنفسجي، ملغي أحمر
 const statusColor: Record<BookingStatus, { bg: string; text: string; ring: string; dot: string; chip: string }> = {
@@ -39,8 +42,39 @@ function CalendarStatusBadge({ status }: { status: BookingStatus }) {
 }
 
 type ViewMode = "month" | "week" | "day";
+const makeLocalDate = (year: number, month: number, day: number) => new Date(year, month, day, 12, 0, 0, 0);
 const fmtISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const todayISO = () => fmtISO(new Date());
+
+function parseLocalISO(dateISO: string) {
+  const [year, month, day] = dateISO.split("-").map(Number);
+  return makeLocalDate(year, month - 1, day);
+}
+
+function getDaysInMonth(year: number, month: number) {
+  return makeLocalDate(year, month + 1, 0).getDate();
+}
+
+function buildMonthGrid(year: number, month: number): CalendarCell[] {
+  const firstOfMonth = makeLocalDate(year, month, 1);
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstColumn = WEEKDAY_ORDER.indexOf(firstOfMonth.getDay() as WeekdayNumber);
+  const totalCells = Math.ceil((firstColumn + daysInMonth) / 7) * 7;
+
+  return Array.from({ length: totalCells }, (_, index) => {
+    const day = index - firstColumn + 1;
+    if (day < 1 || day > daysInMonth) return null;
+    const date = makeLocalDate(year, month, day);
+    return { date, iso: fmtISO(date), day, weekDay: date.getDay() as WeekdayNumber };
+  });
+}
+
+function buildWeekDays(cursor: Date) {
+  const current = makeLocalDate(cursor.getFullYear(), cursor.getMonth(), cursor.getDate());
+  const diffFromWeekStart = (current.getDay() - WEEKDAY_ORDER[0] + 7) % 7;
+  const start = makeLocalDate(current.getFullYear(), current.getMonth(), current.getDate() - diffFromWeekStart);
+  return Array.from({ length: 7 }, (_, i) => makeLocalDate(start.getFullYear(), start.getMonth(), start.getDate() + i));
+}
 
 /** Detect decoration conflicts across bookings of a date (same decoration overused or overlapping). */
 function detectConflicts(dayBookings: Booking[]): Set<string> {
@@ -83,11 +117,11 @@ function CalendarPage() {
 
   // ===== Month metrics =====
   const monthMetrics = useMemo(() => {
-    const dim = new Date(year, month + 1, 0).getDate();
+    const dim = getDaysInMonth(year, month);
     let total = 0, empty = 0;
     let topDay = { date: "", count: 0 };
     for (let d = 1; d <= dim; d++) {
-      const ds = fmtISO(new Date(year, month, d));
+      const ds = fmtISO(makeLocalDate(year, month, d));
       const list = bookingsByDate[ds] || [];
       total += list.length;
       if (list.length === 0) empty++;
@@ -106,23 +140,10 @@ function CalendarPage() {
   const navDay = (delta: number) => { const d = new Date(cursor); d.setDate(d.getDate() + delta); setCursor(d); };
 
   // ===== Month grid =====
-  // RTL grid: column 0 is rightmost (السبت=6). Pad so that getDay()==6 lands at col 0
-  // and getDay()==0 (الأحد) lands at col 6.
-  const firstDayOfWeek = new Date(year, month, 1).getDay();
-  const firstDay = (6 - firstDayOfWeek + 7) % 7;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells: (number | null)[] = [];
-  for (let i = 0; i < firstDay; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  const cells = useMemo(() => buildMonthGrid(year, month), [year, month]);
 
   // ===== Week cells =====
-  const weekDays = useMemo(() => {
-    const start = new Date(cursor);
-    start.setDate(start.getDate() - start.getDay());
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(start); d.setDate(d.getDate() + i); return d;
-    });
-  }, [cursor]);
+  const weekDays = useMemo(() => buildWeekDays(cursor), [cursor]);
 
   const selectedBookings = selectedDate ? (bookingsByDate[selectedDate] || []) : [];
   const selectedConflicts = useMemo(() => detectConflicts(selectedBookings), [selectedBookings]);
@@ -192,7 +213,7 @@ function CalendarPage() {
                 <div className="grid grid-cols-7 gap-1.5">
                   {cells.map((d, i) => {
                     if (d === null) return <div key={i} className="min-h-[88px] lg:min-h-[110px]" />;
-                    const ds = fmtISO(new Date(year, month, d));
+                    const ds = d.iso;
                     const dayBookings = bookingsByDate[ds] || [];
                     const isToday = ds === today;
                     const busy = dayBookings.length >= 3;
@@ -212,7 +233,7 @@ function CalendarPage() {
                             {hasConflict && <AlertTriangle className="size-3.5 text-destructive animate-pulse" />}
                             {busy && !hasConflict && <Flame className="size-3.5 text-gold" />}
                           </div>
-                          <div className={`text-xs font-bold ${isToday ? "text-gold" : ""}`}>{d}</div>
+                          <div className={`text-xs font-bold ${isToday ? "text-gold" : ""}`}>{d.day}</div>
                         </div>
 
                         <div className="mt-1.5 space-y-1">
@@ -251,7 +272,7 @@ function CalendarPage() {
                         "border-border/60 bg-card/50"
                       }`}>
                       <div className="text-center pb-2 border-b border-border/40">
-                        <div className="text-[10px] text-muted-foreground">{dayNamesShort[d.getDay()]}</div>
+                        <div className="text-[10px] text-muted-foreground">{shortDayNames[d.getDay()]}</div>
                         <div className={`text-lg font-bold ${isToday ? "text-gold" : ""}`}>{d.getDate()}</div>
                       </div>
                       <div className="mt-2 space-y-1.5">
@@ -304,8 +325,7 @@ function CalendarPage() {
             <DialogTitle className="text-xl flex items-center gap-2">
               <Sparkles className="size-5 text-gold" />
               {selectedDate && (() => {
-                const [yy, mm, dd] = selectedDate.split("-").map(Number);
-                const d = new Date(yy, mm - 1, dd);
+                const d = parseLocalISO(selectedDate);
                 return `${fullDayNames[d.getDay()]}، ${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
               })()}
             </DialogTitle>
