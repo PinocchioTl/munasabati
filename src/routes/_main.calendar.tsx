@@ -106,7 +106,10 @@ function CalendarPage() {
   const navDay = (delta: number) => { const d = new Date(cursor); d.setDate(d.getDate() + delta); setCursor(d); };
 
   // ===== Month grid =====
-  const firstDay = new Date(year, month, 1).getDay();
+  // RTL grid: column 0 is rightmost (السبت=6). Pad so that getDay()==6 lands at col 0
+  // and getDay()==0 (الأحد) lands at col 6.
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
+  const firstDay = (6 - firstDayOfWeek + 7) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const cells: (number | null)[] = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
