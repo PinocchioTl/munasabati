@@ -304,7 +304,8 @@ function CalendarPage() {
             <DialogTitle className="text-xl flex items-center gap-2">
               <Sparkles className="size-5 text-gold" />
               {selectedDate && (() => {
-                const d = new Date(selectedDate);
+                const [yy, mm, dd] = selectedDate.split("-").map(Number);
+                const d = new Date(yy, mm - 1, dd);
                 return `${fullDayNames[d.getDay()]}، ${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
               })()}
             </DialogTitle>
