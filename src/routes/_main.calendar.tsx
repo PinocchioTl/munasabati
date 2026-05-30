@@ -117,11 +117,11 @@ function CalendarPage() {
 
   // ===== Month metrics =====
   const monthMetrics = useMemo(() => {
-    const dim = new Date(year, month + 1, 0).getDate();
+    const dim = getDaysInMonth(year, month);
     let total = 0, empty = 0;
     let topDay = { date: "", count: 0 };
     for (let d = 1; d <= dim; d++) {
-      const ds = fmtISO(new Date(year, month, d));
+      const ds = fmtISO(makeLocalDate(year, month, d));
       const list = bookingsByDate[ds] || [];
       total += list.length;
       if (list.length === 0) empty++;
@@ -140,23 +140,10 @@ function CalendarPage() {
   const navDay = (delta: number) => { const d = new Date(cursor); d.setDate(d.getDate() + delta); setCursor(d); };
 
   // ===== Month grid =====
-  // RTL grid: column 0 is rightmost (السبت=6). Pad so that getDay()==6 lands at col 0
-  // and getDay()==0 (الأحد) lands at col 6.
-  const firstDayOfWeek = new Date(year, month, 1).getDay();
-  const firstDay = (6 - firstDayOfWeek + 7) % 7;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells: (number | null)[] = [];
-  for (let i = 0; i < firstDay; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  const cells = useMemo(() => buildMonthGrid(year, month), [year, month]);
 
   // ===== Week cells =====
-  const weekDays = useMemo(() => {
-    const start = new Date(cursor);
-    start.setDate(start.getDate() - start.getDay());
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(start); d.setDate(d.getDate() + i); return d;
-    });
-  }, [cursor]);
+  const weekDays = useMemo(() => buildWeekDays(cursor), [cursor]);
 
   const selectedBookings = selectedDate ? (bookingsByDate[selectedDate] || []) : [];
   const selectedConflicts = useMemo(() => detectConflicts(selectedBookings), [selectedBookings]);
@@ -226,7 +213,7 @@ function CalendarPage() {
                 <div className="grid grid-cols-7 gap-1.5">
                   {cells.map((d, i) => {
                     if (d === null) return <div key={i} className="min-h-[88px] lg:min-h-[110px]" />;
-                    const ds = fmtISO(new Date(year, month, d));
+                    const ds = d.iso;
                     const dayBookings = bookingsByDate[ds] || [];
                     const isToday = ds === today;
                     const busy = dayBookings.length >= 3;
@@ -246,7 +233,7 @@ function CalendarPage() {
                             {hasConflict && <AlertTriangle className="size-3.5 text-destructive animate-pulse" />}
                             {busy && !hasConflict && <Flame className="size-3.5 text-gold" />}
                           </div>
-                          <div className={`text-xs font-bold ${isToday ? "text-gold" : ""}`}>{d}</div>
+                          <div className={`text-xs font-bold ${isToday ? "text-gold" : ""}`}>{d.day}</div>
                         </div>
 
                         <div className="mt-1.5 space-y-1">
@@ -285,7 +272,7 @@ function CalendarPage() {
                         "border-border/60 bg-card/50"
                       }`}>
                       <div className="text-center pb-2 border-b border-border/40">
-                        <div className="text-[10px] text-muted-foreground">{dayNamesShort[d.getDay()]}</div>
+                        <div className="text-[10px] text-muted-foreground">{shortDayNames[d.getDay()]}</div>
                         <div className={`text-lg font-bold ${isToday ? "text-gold" : ""}`}>{d.getDate()}</div>
                       </div>
                       <div className="mt-2 space-y-1.5">
