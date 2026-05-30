@@ -15,9 +15,12 @@ export const Route = createFileRoute("/_main/calendar")({
 });
 
 const monthNames = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
-const dayNames = ["السبت","الجمعة","الخميس","الأربعاء","الثلاثاء","الإثنين","الأحد"]; // RTL visual order
-const dayNamesShort = ["سبت","جمعة","خميس","أربعاء","ثلاثاء","إثنين","أحد"];
 const fullDayNames = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+const shortDayNames = ["أحد","إثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"];
+const WEEKDAY_ORDER = [6, 0, 1, 2, 3, 4, 5] as const; // السبت → الجمعة، مبني على Date.getDay()
+type WeekdayNumber = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+type CalendarCell = { date: Date; iso: string; day: number; weekDay: WeekdayNumber } | null;
+const dayNames = WEEKDAY_ORDER.map((day) => fullDayNames[day]);
 
 // ألوان الحالات: مؤكد أخضر، انتظار أصفر، جاري التنفيذ أزرق، مكتمل بنفسجي، ملغي أحمر
 const statusColor: Record<BookingStatus, { bg: string; text: string; ring: string; dot: string; chip: string }> = {
@@ -39,8 +42,39 @@ function CalendarStatusBadge({ status }: { status: BookingStatus }) {
 }
 
 type ViewMode = "month" | "week" | "day";
+const makeLocalDate = (year: number, month: number, day: number) => new Date(year, month, day, 12, 0, 0, 0);
 const fmtISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const todayISO = () => fmtISO(new Date());
+
+function parseLocalISO(dateISO: string) {
+  const [year, month, day] = dateISO.split("-").map(Number);
+  return makeLocalDate(year, month - 1, day);
+}
+
+function getDaysInMonth(year: number, month: number) {
+  return makeLocalDate(year, month + 1, 0).getDate();
+}
+
+function buildMonthGrid(year: number, month: number): CalendarCell[] {
+  const firstOfMonth = makeLocalDate(year, month, 1);
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstColumn = WEEKDAY_ORDER.indexOf(firstOfMonth.getDay() as WeekdayNumber);
+  const totalCells = Math.ceil((firstColumn + daysInMonth) / 7) * 7;
+
+  return Array.from({ length: totalCells }, (_, index) => {
+    const day = index - firstColumn + 1;
+    if (day < 1 || day > daysInMonth) return null;
+    const date = makeLocalDate(year, month, day);
+    return { date, iso: fmtISO(date), day, weekDay: date.getDay() as WeekdayNumber };
+  });
+}
+
+function buildWeekDays(cursor: Date) {
+  const current = makeLocalDate(cursor.getFullYear(), cursor.getMonth(), cursor.getDate());
+  const diffFromWeekStart = (current.getDay() - WEEKDAY_ORDER[0] + 7) % 7;
+  const start = makeLocalDate(current.getFullYear(), current.getMonth(), current.getDate() - diffFromWeekStart);
+  return Array.from({ length: 7 }, (_, i) => makeLocalDate(start.getFullYear(), start.getMonth(), start.getDate() + i));
+}
 
 /** Detect decoration conflicts across bookings of a date (same decoration overused or overlapping). */
 function detectConflicts(dayBookings: Booking[]): Set<string> {
