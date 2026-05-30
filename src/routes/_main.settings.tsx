@@ -3,8 +3,7 @@ import { Card, SectionHeader, Button } from "@/components/ui-bits";
 import {
   Bell, Palette, Database, Shield, Search, Crown, Moon, Sun, Type, Layout,
   Download, Upload, History, RefreshCw, Lock, KeyRound, LogOut, EyeOff,
-  AlertTriangle, Clock, Package, Wallet, Check, Sparkles, Plug,
-  MessageCircle, MapPin, CalendarDays, Mail,
+  AlertTriangle, Clock, Package, Wallet, Check, Sparkles,
 } from "lucide-react";
 import { useState, useEffect, useMemo, ReactNode } from "react";
 import { toast } from "sonner";
@@ -16,12 +15,11 @@ export const Route = createFileRoute("/_main/settings")({
   component: SettingsPage,
 });
 
-type SectionId = "branding" | "notifications" | "integrations" | "appearance" | "backup" | "security";
+type SectionId = "branding" | "notifications" | "appearance" | "backup" | "security";
 
 const sections: { id: SectionId; label: string; icon: typeof Bell; color: string; bg: string; desc: string }[] = [
   { id: "branding",      label: "الهوية البصرية", icon: Sparkles, color: "text-gold", bg: "bg-gold/10", desc: "شعار الشركة، الاسم، الألوان" },
   { id: "notifications", label: "الإشعارات", icon: Bell, color: "text-warning", bg: "bg-warning/10", desc: "تنبيهات المناسبات والمخزون والدفعات" },
-  { id: "integrations",  label: "التكاملات", icon: Plug, color: "text-info", bg: "bg-info/10", desc: "واتساب، خرائط، تقويم، بريد" },
   { id: "appearance",    label: "المظهر",    icon: Palette, color: "text-info",    bg: "bg-info/10",    desc: "الوضع الليلي، الألوان، حجم الخط" },
   { id: "backup",        label: "النسخ الاحتياطي", icon: Database, color: "text-success", bg: "bg-success/10", desc: "تصدير، استيراد، نسخ تلقائي" },
   { id: "security",      label: "الأمان",    icon: Shield, color: "text-destructive", bg: "bg-destructive/10", desc: "كلمة المرور، PIN، جلسات الدخول" },
@@ -121,7 +119,6 @@ function SettingsPage() {
         <div className="animate-fade-in min-w-0" key={active}>
           {active === "branding" && <BrandingSettings />}
           {active === "notifications" && <NotificationsSection />}
-          {active === "integrations" && <IntegrationsSection />}
           {active === "appearance" && <AppearanceSection />}
           {active === "backup" && <BackupSection />}
           {active === "security" && <SecuritySection />}
@@ -183,127 +180,6 @@ function NotificationsSection() {
 }
 
 /* ============ APPEARANCE ============ */
-/* ============ INTEGRATIONS ============ */
-const INTEGRATIONS_KEY = "munasabati.integrations";
-type IntegrationsState = {
-  whatsapp: boolean;
-  maps: boolean;
-  calendar: boolean;
-  email: boolean;
-  whatsappNumber: string;
-  mapsProvider: "google" | "apple";
-};
-const DEFAULT_INTEGRATIONS: IntegrationsState = {
-  whatsapp: true,
-  maps: true,
-  calendar: true,
-  email: true,
-  whatsappNumber: "",
-  mapsProvider: "google",
-};
-
-function loadIntegrations(): IntegrationsState {
-  if (typeof window === "undefined") return DEFAULT_INTEGRATIONS;
-  try {
-    const raw = localStorage.getItem(INTEGRATIONS_KEY);
-    return raw ? { ...DEFAULT_INTEGRATIONS, ...JSON.parse(raw) } : DEFAULT_INTEGRATIONS;
-  } catch { return DEFAULT_INTEGRATIONS; }
-}
-
-function IntegrationsSection() {
-  const [s, setS] = useState<IntegrationsState>(DEFAULT_INTEGRATIONS);
-  useEffect(() => { setS(loadIntegrations()); }, []);
-  const update = <K extends keyof IntegrationsState>(k: K, v: IntegrationsState[K]) => {
-    const next = { ...s, [k]: v };
-    setS(next);
-    try { localStorage.setItem(INTEGRATIONS_KEY, JSON.stringify(next)); } catch {/* ignore */}
-  };
-
-  return (
-    <SectionShell icon={<Plug />} title="التكاملات" desc="اربط التطبيق بخدماتك المفضلة بدون مفاتيح API">
-      <IntegrationCard
-        icon={<MessageCircle className="size-5" />}
-        title="واتساب"
-        desc="إرسال تفاصيل الحجز والتذكيرات للعملاء عبر واتساب"
-        color="text-success" bg="bg-success/10"
-        enabled={s.whatsapp}
-        onToggle={(v) => update("whatsapp", v)}
-        extra={s.whatsapp && (
-          <input
-            type="tel" dir="ltr" placeholder="+213XXXXXXXXX"
-            value={s.whatsappNumber}
-            onChange={(e) => update("whatsappNumber", e.target.value)}
-            className="mt-3 w-full bg-secondary/60 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-        )}
-      />
-      <Divider />
-      <IntegrationCard
-        icon={<MapPin className="size-5" />}
-        title="الخرائط"
-        desc="فتح موقع المناسبة مباشرة في خرائط Google أو Apple"
-        color="text-info" bg="bg-info/10"
-        enabled={s.maps}
-        onToggle={(v) => update("maps", v)}
-        extra={s.maps && (
-          <div className="flex gap-1 p-1 rounded-xl bg-secondary/60 mt-3 w-fit">
-            {([["google","Google"],["apple","Apple"]] as const).map(([v, l]) => (
-              <button key={v} onClick={() => update("mapsProvider", v)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                  s.mapsProvider === v ? "bg-card shadow-soft" : "text-muted-foreground"
-                }`}>{l}</button>
-            ))}
-          </div>
-        )}
-      />
-      <Divider />
-      <IntegrationCard
-        icon={<CalendarDays className="size-5" />}
-        title="التقويم (iCalendar)"
-        desc="تصدير الحجوزات بصيغة .ics لتقويم Google و Apple و Outlook"
-        color="text-gold" bg="bg-gold/10"
-        enabled={s.calendar}
-        onToggle={(v) => update("calendar", v)}
-      />
-      <Divider />
-      <IntegrationCard
-        icon={<Mail className="size-5" />}
-        title="البريد الإلكتروني"
-        desc="فتح برنامج البريد لإرسال الفواتير والتأكيدات للعملاء"
-        color="text-warning" bg="bg-warning/10"
-        enabled={s.email}
-        onToggle={(v) => update("email", v)}
-      />
-
-      <div className="mt-6 pt-5 border-t border-border/60 text-xs text-muted-foreground">
-        💡 هذه التكاملات تعمل عبر الروابط القياسية بدون الحاجة إلى مفاتيح خارجية. لإرسال رسائل تلقائية تحتاج إلى تفعيل بوابة مدفوعة.
-      </div>
-    </SectionShell>
-  );
-}
-
-function IntegrationCard({ icon, title, desc, color, bg, enabled, onToggle, extra }: {
-  icon: ReactNode; title: string; desc: string; color: string; bg: string;
-  enabled: boolean; onToggle: (v: boolean) => void; extra?: ReactNode;
-}) {
-  return (
-    <div className="py-4">
-      <div className="flex items-start gap-3">
-        <div className={`size-11 rounded-xl ${bg} ${color} flex items-center justify-center shrink-0`}>{icon}</div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="font-bold text-sm">{title}</div>
-            {enabled && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-success/15 text-success">مفعّل</span>}
-          </div>
-          <div className="text-xs text-muted-foreground mt-0.5">{desc}</div>
-        </div>
-        <Toggle value={enabled} onChange={onToggle} />
-      </div>
-      {extra && <div className="mr-14">{extra}</div>}
-    </div>
-  );
-}
-
 function AppearanceSection() {
   const [dark, setDark] = useState(() =>
     typeof document !== "undefined" && document.documentElement.classList.contains("dark")
