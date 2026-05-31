@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Card, SectionHeader, Button } from "@/components/ui-bits";
 import {
   Bell, Palette, Database, Shield, Search, Crown, Moon, Sun, Type, Layout,
-  Download, Upload, History, RefreshCw, Lock, KeyRound, LogOut, EyeOff,
+  Download, Upload, Lock, KeyRound, LogOut, EyeOff,
   AlertTriangle, Clock, Package, Wallet, Check, Sparkles,
 } from "lucide-react";
 import { useState, useEffect, useMemo, ReactNode } from "react";
