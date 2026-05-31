@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Card, SectionHeader, Button, LoadingState, EmptyState } from "@/components/ui-bits";
 import { useDecorations, formatSAR, itemStatusLabels, type Decoration } from "@/lib/db";
 import { DecorationDialog } from "@/components/ItemDialog";
-import { Plus, Search, Flame, TrendingUp, Pencil } from "lucide-react";
+import { Plus, Search, Flame, TrendingUp, Pencil, X } from "lucide-react";
 import { useState, useMemo } from "react";
 
 export const Route = createFileRoute("/_main/decorations")({
@@ -15,6 +15,7 @@ function DecorationsPage() {
   const { data: decorations = [], isLoading } = useDecorations();
   const [cat, setCat] = useState("الكل");
   const [query, setQuery] = useState("");
+  const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
 
   const categories = useMemo(() =>
     ["الكل", ...Array.from(new Set(decorations.map(d => d.category).filter(Boolean) as string[]))],
@@ -80,10 +81,12 @@ function DecorationsPage() {
               : d.status === "limited" ? "text-warning bg-warning/10"
               : "text-success bg-success/10";
             const isTop = d.id === topId;
+            const cover = d.images?.[0];
+            const hasImg = !!cover && cover.startsWith("http");
             return (
-              <Card key={d.id} className="p-5 hover:shadow-luxury transition group relative overflow-hidden">
+              <Card key={d.id} className="p-3 sm:p-5 hover:shadow-luxury transition group relative overflow-hidden">
                 {isTop && (
-                  <div className="absolute top-2 left-2 z-10 bg-gradient-gold text-primary text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-gold">
+                  <div className="absolute top-2 left-2 z-10 bg-gradient-gold text-primary text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-gold pointer-events-none">
                     <Flame className="size-3" /> الأكثر طلباً
                   </div>
                 )}
@@ -91,26 +94,36 @@ function DecorationsPage() {
                   type="button"
                   onClick={() => setEditing(d)}
                   aria-label="تعديل الديكور"
-                  className="absolute top-2 right-2 z-10 size-9 rounded-full bg-card/90 backdrop-blur border border-border shadow-sm flex items-center justify-center text-muted-foreground hover:text-gold hover:border-gold/50 transition opacity-0 group-hover:opacity-100 focus:opacity-100 md:opacity-0 max-md:opacity-100"
+                  className="absolute top-2 right-2 z-10 size-8 sm:size-9 rounded-full bg-card/90 backdrop-blur border border-border shadow-sm flex items-center justify-center text-muted-foreground hover:text-gold hover:border-gold/50 transition sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
                 >
-                  <Pencil className="size-4" />
+                  <Pencil className="size-3.5 sm:size-4" />
                 </button>
 
-                <div className="aspect-square rounded-2xl bg-gradient-to-br from-gold/10 via-secondary to-info/5 overflow-hidden mb-4 group-hover:scale-[1.02] transition flex items-center justify-center">
-                  {d.images?.[0]?.startsWith("http") ? (
-                    <img src={d.images[0]} alt={d.name} className="w-full h-full object-cover" loading="lazy" />
-                  ) : (
-                    <Flame className="size-10 text-gold/40" />
-                  )}
-                </div>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="font-bold truncate">{d.name}</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">{d.category}</div>
+                {/* Mobile: horizontal thumbnail row; Desktop: cover image */}
+                <div className="flex sm:block gap-3 sm:gap-0">
+                  <button
+                    type="button"
+                    onClick={() => hasImg && setLightbox({ src: cover!, name: d.name })}
+                    className="shrink-0 size-20 sm:size-auto sm:w-full sm:aspect-square rounded-xl sm:rounded-2xl bg-gradient-to-br from-gold/10 via-secondary to-info/5 overflow-hidden sm:mb-4 sm:group-hover:scale-[1.02] transition flex items-center justify-center"
+                    aria-label={hasImg ? "عرض الصورة" : d.name}
+                  >
+                    {hasImg ? (
+                      <img src={cover} alt={d.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                    ) : (
+                      <Flame className="size-8 sm:size-10 text-gold/40" />
+                    )}
+                  </button>
+                  <div className="min-w-0 flex-1 sm:contents">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-bold text-sm sm:text-base truncate">{d.name}</div>
+                        <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{d.category}</div>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap shrink-0 ${statusColor}`}>{itemStatusLabels[d.status]}</span>
+                    </div>
+                    <div className="mt-1 sm:mt-4 text-base sm:text-lg font-bold text-gold">{formatSAR(+d.price)}</div>
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap ${statusColor}`}>{itemStatusLabels[d.status]}</span>
                 </div>
-                <div className="mt-4 text-lg font-bold text-gold">{formatSAR(+d.price)}</div>
                 <div className="mt-3 pt-3 border-t border-border space-y-1.5">
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">المتوفر</span>
@@ -133,6 +146,21 @@ function DecorationsPage() {
       )}
       <DecorationDialog open={open} onClose={() => setOpen(false)} />
       <DecorationDialog open={!!editing} onClose={() => setEditing(null)} decoration={editing} />
+      {lightbox && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur flex items-center justify-center p-4 animate-fade-in"
+             onClick={() => setLightbox(null)} role="dialog">
+          <button onClick={() => setLightbox(null)}
+            className="absolute top-4 right-4 size-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20">
+            <X className="size-5" />
+          </button>
+          <img src={lightbox.src} alt={lightbox.name}
+            className="max-w-full max-h-full object-contain rounded-xl shadow-luxury"
+            onClick={(e) => e.stopPropagation()} />
+          <div className="absolute bottom-6 inset-x-0 text-center text-white text-sm font-semibold drop-shadow">
+            {lightbox.name}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
