@@ -265,3 +265,40 @@
   -ms-overflow-style: none;
   &::-webkit-scrollbar { display: none; }
 }
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+/* ===== Global mobile safety guards =====
+   Prevent horizontal page overflow, force long text/words to wrap,
+   and keep flex/grid children shrinkable so cards never push past the
+   viewport edge on small screens. */
+html, body, #root {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+@media (max-width: 767px) {
+  /* Wrap long words / URLs / phone numbers inside cards */
+  main, main * {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  /* Allow flex/grid items to shrink below content size — fixes overflow
+     caused by min-content defaults inside cards and rows. */
+  main .flex > *,
+  main .grid > * {
+    min-width: 0;
+  }
+  /* Cap images/media so they never push containers wider than the screen */
+  main img, main video, main svg, main canvas {
+    max-width: 100%;
+    height: auto;
+  }
+  /* Tables become horizontally scrollable inside their wrappers,
+     never push the whole page. */
+  main table { display: block; max-width: 100%; overflow-x: auto; }
+}
