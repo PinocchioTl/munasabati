@@ -89,29 +89,38 @@ function Dashboard() {
   };
 
   return (
-    <div className="space-y-8 animate-slide-up">
-      <SectionHeader
-        title="لوحة التحكم"
-        subtitle="نظرة شاملة وذكية على أعمالك — تُحدّث تلقائياً"
-        action={<Button variant="gold" onClick={() => setOpen(true)}><Sparkles className="size-4" />حجز جديد</Button>}
-      />
+    <div className="space-y-4 lg:space-y-8 animate-slide-up">
+      <div className="hidden lg:block">
+        <SectionHeader
+          title="لوحة التحكم"
+          subtitle="نظرة شاملة وذكية على أعمالك — تُحدّث تلقائياً"
+          action={<Button variant="gold" onClick={() => setOpen(true)}><Sparkles className="size-4" />حجز جديد</Button>}
+        />
+      </div>
+      <div className="lg:hidden flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight truncate">لوحة التحكم</h1>
+          <p className="text-[11px] text-muted-foreground mt-0.5 truncate">نظرة شاملة • تُحدّث تلقائياً</p>
+        </div>
+        <Button variant="gold" size="sm" onClick={() => setOpen(true)} className="shrink-0"><Sparkles className="size-4" />جديد</Button>
+      </div>
 
       <DemoModePanel />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
         {stats.map((s) => (
-          <Card key={s.label} className="p-5 relative overflow-hidden">
+          <Card key={s.label} className="p-3 lg:p-5 relative overflow-hidden">
             <div className={`absolute inset-0 bg-gradient-to-bl ${accentMap[s.accent]} opacity-60 pointer-events-none`} />
             <div className="relative">
               <div className="flex items-start justify-between">
-                <div className={`size-10 rounded-xl bg-card border border-border flex items-center justify-center ${accentMap[s.accent].split(" ").pop()}`}>
-                  <s.icon className="size-[18px]" />
+                <div className={`size-8 lg:size-10 rounded-xl bg-card border border-border flex items-center justify-center ${accentMap[s.accent].split(" ").pop()}`}>
+                  <s.icon className="size-4 lg:size-[18px]" />
                 </div>
-                <ArrowUpRight className="size-4 text-muted-foreground" />
+                <ArrowUpRight className="size-3.5 lg:size-4 text-muted-foreground" />
               </div>
-              <div className="mt-4 text-2xl lg:text-3xl font-bold tracking-tight">{s.value}</div>
-              <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
-              <div className="text-[11px] text-muted-foreground/80 mt-2 flex items-center gap-1">
+              <div className="mt-2 lg:mt-4 text-lg lg:text-3xl font-bold tracking-tight truncate">{s.value}</div>
+              <div className="text-[11px] lg:text-xs text-muted-foreground mt-1 truncate">{s.label}</div>
+              <div className="hidden lg:flex text-[11px] text-muted-foreground/80 mt-2 items-center gap-1">
                 <TrendingUp className="size-3" /> {s.sub}
               </div>
             </div>
@@ -120,7 +129,7 @@ function Dashboard() {
       </div>
 
       {/* Smart insights */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         <InsightCard icon={Flame} color="text-destructive bg-destructive/10" label="أكثر يوم ازدحاماً"
           value={insights.busiest ? insights.busiest[0] : "—"}
           sub={insights.busiest ? `${insights.busiest[1]} مناسبات` : "لا بيانات"} />
@@ -135,19 +144,19 @@ function Dashboard() {
           sub={insights.bestMonth ? formatSAR(insights.bestMonth.profit) : ""} />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4">
-        <Card className="p-6 lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
+        <Card className="p-4 lg:p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-6">
             <div>
               <div className="text-sm text-muted-foreground">الدخل والأرباح</div>
-              <div className="text-xl font-bold mt-1">تطور الإيرادات الشهرية</div>
+              <div className="text-base lg:text-xl font-bold mt-1">تطور الإيرادات الشهرية</div>
             </div>
             <div className="flex gap-2 text-xs">
               <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-info" />الدخل</span>
               <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-gold" />الأرباح</span>
             </div>
           </div>
-          <div className="h-64">
+          <div className="h-52 lg:h-64 -mx-2">
             {insights.monthlyArr.length === 0 ? (
               <div className="h-full flex items-center justify-center text-sm text-muted-foreground">لا توجد بيانات بعد</div>
             ) : (
@@ -202,12 +211,12 @@ function Dashboard() {
         </Card>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4">
-        <Card className="p-6 lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
+        <Card className="p-4 lg:p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-5">
             <div>
               <div className="text-sm text-muted-foreground">آخر النشاطات</div>
-              <div className="text-xl font-bold mt-1">الحجوزات الأخيرة</div>
+              <div className="text-base lg:text-xl font-bold mt-1">الحجوزات الأخيرة</div>
             </div>
             <Link to="/bookings" className="text-xs font-semibold text-info hover:underline">عرض الكل</Link>
           </div>
