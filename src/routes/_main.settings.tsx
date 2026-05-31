@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { BrandingSettings } from "@/components/BrandingSettings";
 import { PhoneInput } from "@/components/PhoneInput";
 import { supabase } from "@/integrations/supabase/client";
+import { exportAllData, downloadBundle, importBundle, type BackupBundle } from "@/lib/backup";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_main/settings")({
   component: SettingsPage,
@@ -293,68 +295,125 @@ function AppearanceSection() {
 
 /* ============ BACKUP ============ */
 function BackupSection() {
-  const handleExport = () => toast.success("جاري تصدير البيانات...", { description: "سيتم تنزيل الملف خلال لحظات" });
-  const handleImport = () => toast.info("اختر ملف النسخة الاحتياطية");
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState<"export" | "import" | null>(null);
+  const [pending, setPending] = useState<BackupBundle | null>(null);
+
+  async function handleExport() {
+    try {
+      setBusy("export");
+      const bundle = await exportAllData();
+      downloadBundle(bundle);
+      const counts = Object.entries(bundle.tables)
+        .map(([k, v]) => `${k}: ${v?.length ?? 0}`).join(" • ");
+      toast.success("تم تصدير النسخة الاحتياطية", { description: counts });
+    } catch (e: any) {
+      toast.error("فشل التصدير", { description: e.message });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function pickFile() {
+    const inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "application/json,.json";
+    inp.onchange = async () => {
+      const f = inp.files?.[0];
+      if (!f) return;
+      try {
+        const text = await f.text();
+        const parsed = JSON.parse(text) as BackupBundle;
+        if (parsed?.app !== "munasabati" || !parsed?.tables) {
+          throw new Error("الملف ليس نسخة احتياطية صحيحة لـ Munasabati");
+        }
+        setPending(parsed);
+      } catch (e: any) {
+        toast.error("ملف غير صالح", { description: e.message });
+      }
+    };
+    inp.click();
+  }
+
+  async function runImport(mode: "merge" | "replace") {
+    if (!pending) return;
+    try {
+      setBusy("import");
+      const res = await importBundle(pending, mode);
+      await qc.invalidateQueries();
+      toast.success(mode === "replace" ? "تم استبدال البيانات" : "تم دمج البيانات",
+        { description: `حجوزات: ${res.bookings} • زبائن: ${res.clients} • ديكورات: ${res.decorations} • مستلزمات: ${res.supplies}` });
+      setPending(null);
+    } catch (e: any) {
+      toast.error("فشل الاستيراد", { description: e.message });
+    } finally {
+      setBusy(null);
+    }
+  }
 
   return (
     <SectionShell icon={<Database />} title="النسخ الاحتياطي" desc="إدارة بيانات التطبيق والنسخ التلقائية">
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <ActionCard
           icon={<Download className="size-5" />}
           title="تصدير البيانات"
-          desc="تنزيل جميع البيانات بصيغة JSON"
+          desc="تنزيل كل الحجوزات والزبائن والديكورات والمستلزمات والأرباح والإشعارات بصيغة JSON"
           accent="success"
           onClick={handleExport}
-          actionLabel="تصدير الآن"
+          actionLabel={busy === "export" ? "جاري التصدير..." : "تصدير الآن"}
         />
         <ActionCard
           icon={<Upload className="size-5" />}
           title="استيراد البيانات"
-          desc="استرجاع من نسخة احتياطية"
+          desc="استرجاع من ملف JSON مع خيار الدمج أو الاستبدال"
           accent="info"
-          onClick={handleImport}
+          onClick={pickFile}
           actionLabel="اختيار ملف"
         />
       </div>
 
       <Divider className="my-4" />
-
-      <SwitchRow
-        icon={<RefreshCw className="size-4 text-gold" />}
-        title="النسخ الاحتياطي التلقائي"
-        desc="حفظ تلقائي يومي للبيانات في السحابة"
-        defaultOn
-      />
-
-      <Divider />
-
-      <div className="py-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="size-9 rounded-lg bg-secondary text-foreground flex items-center justify-center">
-              <History className="size-4" />
-            </div>
-            <div>
-              <div className="font-bold text-sm">سجل التعديلات</div>
-              <div className="text-xs text-muted-foreground">آخر العمليات على البيانات</div>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm">عرض الكل</Button>
+      <div className="p-4 rounded-2xl bg-secondary/40 border border-border/60 text-xs text-muted-foreground leading-relaxed">
+        <div className="flex items-center gap-2 font-bold text-foreground mb-1.5">
+          <AlertTriangle className="size-4 text-warning" />
+          ملاحظات هامة
         </div>
-        <div className="space-y-2 mt-3">
-          {[
-            { t: "إضافة حجز جديد", time: "قبل 5 دقائق", c: "text-success" },
-            { t: "تحديث ديكور كراسي ذهبية", time: "قبل ساعة", c: "text-info" },
-            { t: "نسخ احتياطي تلقائي", time: "قبل 3 ساعات", c: "text-gold" },
-          ].map((l, i) => (
-            <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl bg-secondary/40 text-sm">
-              <span className={`size-1.5 rounded-full ${l.c.replace("text-", "bg-")}`} />
-              <span className="flex-1 font-medium">{l.t}</span>
-              <span className="text-xs text-muted-foreground">{l.time}</span>
-            </div>
-          ))}
-        </div>
+        <ul className="list-disc pr-5 space-y-1">
+          <li>التصدير يحفظ نسخة كاملة من بيانات حسابك فقط.</li>
+          <li><b>الدمج</b>: يضيف البيانات الواردة بجانب الحالية بدون حذف.</li>
+          <li><b>الاستبدال</b>: يحذف جميع بياناتك الحالية ثم يستورد ملف النسخة — لا يمكن التراجع.</li>
+          <li>سيتم إنشاء معرفات جديدة لكل عنصر للحفاظ على سلامة العلاقات.</li>
+        </ul>
       </div>
+
+      {pending && (
+        <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => !busy && setPending(null)}>
+          <div className="bg-card rounded-2xl p-6 w-full max-w-md space-y-4 shadow-luxury" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3">
+              <div className="size-11 rounded-2xl bg-warning/15 text-warning flex items-center justify-center">
+                <AlertTriangle className="size-5" />
+              </div>
+              <div>
+                <div className="font-bold text-base">تأكيد الاستيراد</div>
+                <div className="text-xs text-muted-foreground">اختر طريقة دمج البيانات الواردة</div>
+              </div>
+            </div>
+            <div className="text-xs bg-secondary/50 rounded-xl p-3 leading-relaxed">
+              تم تحميل النسخة بتاريخ <b>{new Date(pending.exported_at).toLocaleString("ar")}</b>.<br />
+              ستضيف: حجوزات {pending.tables.bookings?.length ?? 0} • زبائن {pending.tables.clients?.length ?? 0} • ديكورات {pending.tables.decorations?.length ?? 0} • مستلزمات {pending.tables.supplies?.length ?? 0}.
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button variant="outline" disabled={!!busy} onClick={() => runImport("merge")}>
+                دمج مع الحالية
+              </Button>
+              <Button variant="destructive" disabled={!!busy} onClick={() => runImport("replace")} loading={busy === "import"}>
+                استبدال (حذف الكل)
+              </Button>
+            </div>
+            <button onClick={() => !busy && setPending(null)} className="w-full text-xs text-muted-foreground hover:text-foreground py-2">إلغاء</button>
+          </div>
+        </div>
+      )}
     </SectionShell>
   );
 }
