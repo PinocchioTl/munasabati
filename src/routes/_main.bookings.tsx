@@ -20,6 +20,7 @@ function BookingsPage() {
   const [view, setView] = useState<"cards" | "timeline">("cards");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [dateRange, setDateRange] = useState<"all" | "today" | "week" | "month">("all");
   const { data: bookings = [], isLoading } = useBookings();
   const { data: eventTypes = [] } = useEventTypes();
   const eventTypeMap = useMemo(
@@ -31,8 +32,22 @@ function BookingsPage() {
     if (filter !== "all" && b.status !== filter) return false;
     if (eventFilter !== "all" && b.event_type !== eventFilter) return false;
     if (query && !b.customer_name.includes(query) && !b.code?.includes(query) && !b.phone?.includes(query)) return false;
+    if (dateRange !== "all") {
+      const d = new Date(b.event_date + "T12:00:00");
+      const now = new Date(); now.setHours(0,0,0,0);
+      if (dateRange === "today") {
+        const end = new Date(now); end.setDate(end.getDate()+1);
+        if (d < now || d >= end) return false;
+      } else if (dateRange === "week") {
+        const end = new Date(now); end.setDate(end.getDate()+7);
+        if (d < now || d >= end) return false;
+      } else if (dateRange === "month") {
+        const end = new Date(now); end.setMonth(end.getMonth()+1);
+        if (d < now || d >= end) return false;
+      }
+    }
     return true;
-  }), [bookings, filter, eventFilter, query]);
+  }), [bookings, filter, eventFilter, query, dateRange]);
 
   const stats = useMemo(() => {
     const total = bookings.reduce((s, b) => s + +b.total_price, 0);
@@ -51,47 +66,72 @@ function BookingsPage() {
   ];
 
   return (
-    <div className="space-y-6 animate-slide-up">
+    <div className="space-y-4 lg:space-y-6 animate-slide-up max-w-full">
+      <div className="hidden lg:block">
       <SectionHeader
         title="الحجوزات"
         subtitle={`${bookings.length} حجز إجمالي • ${stats.upcoming} قادم • التحقق التلقائي من التعارضات مفعّل`}
         action={<Button variant="gold" onClick={() => setOpen(true)}><Plus className="size-4" />حجز جديد</Button>}
       />
+      </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Mobile compact header */}
+      <div className="lg:hidden flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight truncate">الحجوزات</h1>
+          <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{bookings.length} إجمالي • {stats.upcoming} قادم</p>
+        </div>
+        <Button variant="gold" size="sm" onClick={() => setOpen(true)} className="shrink-0"><Plus className="size-4" />جديد</Button>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
         <KpiMini label="إجمالي الحجوزات" value={String(bookings.length)} />
         <KpiMini label="الحجوزات القادمة" value={String(stats.upcoming)} />
         <KpiMini label="إجمالي القيمة" value={formatSAR(stats.total)} gold />
         <KpiMini label="المدفوع" value={formatSAR(stats.paid)} />
       </div>
 
-      <Card className="p-4">
+      <Card className="p-3 lg:p-4 sticky top-14 sm:top-16 z-20 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
         <div className="flex flex-col gap-3">
           <div className="flex flex-col lg:flex-row gap-3">
             <div className="flex-1 relative">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <input value={query} onChange={(e) => setQuery(e.target.value)}
                 className="w-full bg-secondary/60 rounded-xl pr-10 pl-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
-                placeholder="ابحث باسم الزبون أو رقم الهاتف أو رقم الحجز..." />
+                placeholder="ابحث باسم أو هاتف أو رقم حجز..." />
             </div>
             <div className="flex gap-2">
               <select value={eventFilter} onChange={(e) => setEventFilter(e.target.value as any)}
-                className="bg-secondary/60 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring">
+                className="flex-1 lg:flex-none bg-secondary/60 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring min-w-0">
                 <option value="all">كل المناسبات</option>
                 {eventTypes.map((t) => <option key={t.id} value={t.name}>{t.label}</option>)}
               </select>
-              <div className="flex bg-secondary/60 rounded-xl p-1">
+              <div className="hidden lg:flex bg-secondary/60 rounded-xl p-1">
                 <button onClick={() => setView("cards")} className={`p-2 rounded-lg transition ${view === "cards" ? "bg-card shadow-soft" : ""}`}><LayoutGrid className="size-4" /></button>
                 <button onClick={() => setView("timeline")} className={`p-2 rounded-lg transition ${view === "timeline" ? "bg-card shadow-soft" : ""}`}><List className="size-4" /></button>
               </div>
             </div>
           </div>
-          <div className="flex gap-1.5 overflow-x-auto">
+          {/* Date quick filter */}
+          <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 scrollbar-none">
+            {([
+              { id: "all", label: "الكل" },
+              { id: "today", label: "اليوم" },
+              { id: "week", label: "هذا الأسبوع" },
+              { id: "month", label: "هذا الشهر" },
+            ] as const).map((r) => (
+              <button key={r.id} onClick={() => setDateRange(r.id)}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap transition shrink-0 ${
+                  dateRange === r.id ? "bg-gold text-primary shadow-soft" : "bg-secondary/60 hover:bg-secondary"
+                }`}>{r.label}</button>
+            ))}
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 scrollbar-none">
             {tabs.map((t) => {
               const count = t.id === "all" ? bookings.length : bookings.filter(b => b.status === t.id).length;
               return (
                 <button key={t.id} onClick={() => setFilter(t.id)}
-                  className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-2 ${
+                  className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5 lg:gap-2 shrink-0 ${
                     filter === t.id ? "bg-primary text-primary-foreground shadow-elegant" : "bg-secondary hover:bg-secondary/70"
                   }`}>
                   {t.label}
@@ -107,7 +147,7 @@ function BookingsPage() {
         <EmptyState title="لا توجد حجوزات مطابقة" description="جرّب تغيير الفلاتر أو ابدأ بإنشاء حجز جديد"
           action={<Button variant="gold" onClick={() => setOpen(true)}><Plus className="size-4" />حجز جديد</Button>} />
       ) : view === "cards" ? (
-        <div className="grid lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
           {filtered.map(b => <BookingCard key={b.id} b={b} typeMap={eventTypeMap} onEdit={() => setEditing(b)} />)}
         </div>
       ) : (
