@@ -116,7 +116,7 @@ function SuppliesPage() {
             const pct = s.total_qty > 0 ? (avail / s.total_qty) * 100 : 0;
             const fullyBooked = avail <= 0;
             return (
-              <Card key={s.id} onClick={() => setEditing(s)} className={`p-3 flex gap-3 items-center cursor-pointer min-w-0 ${fullyBooked ? "opacity-70" : ""}`}>
+              <div key={s.id} onClick={() => setEditing(s)} className={`p-3 flex gap-3 items-center cursor-pointer min-w-0 rounded-2xl border border-border bg-card shadow-sm ${fullyBooked ? "opacity-70" : ""}`}>
                 <div className="size-14 rounded-lg bg-gradient-to-br from-gold/15 to-info/10 overflow-hidden flex items-center justify-center shrink-0">
                   {s.images?.[0]?.startsWith("http") ? (
                     <img src={s.images[0]} alt={s.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
@@ -149,7 +149,7 @@ function SuppliesPage() {
                     </div>
                   </div>
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>
