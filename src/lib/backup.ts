@@ -103,9 +103,10 @@ export async function importBundle(bundle: BackupBundle, mode: "merge" | "replac
     for (const row of rows) {
       const oldId = row.id;
       const payload = stripAuto(mapRefs(row), "id");
-      const { data, error } = await supabase.from(table as any).insert(payload).select("id").single();
+      const { data, error } = await supabase.from(table as any).insert(payload as any).select("id").single();
       if (error) throw new Error(`${table}: ${error.message}`);
-      if (oldId && data?.id) remap[table].set(oldId, data.id);
+      const newId = (data as any)?.id as string | undefined;
+      if (oldId && newId) remap[table].set(oldId, newId);
     }
   }
 
@@ -138,13 +139,13 @@ export async function importBundle(bundle: BackupBundle, mode: "merge" | "replac
       { ...e, booking_id: e.booking_id ? remap.bookings.get(e.booking_id) ?? null : null },
       "id",
     );
-    const { error } = await supabase.from("expenses").insert(payload);
+    const { error } = await supabase.from("expenses").insert(payload as any);
     if (error) throw new Error(`expenses: ${error.message}`);
   }
 
   for (const n of t.notifications || []) {
     const payload = stripAuto(n, "id");
-    await supabase.from("notifications").insert(payload);
+    await supabase.from("notifications").insert(payload as any);
   }
 
   return {
