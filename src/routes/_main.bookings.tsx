@@ -162,9 +162,9 @@ function BookingsPage() {
 
 function KpiMini({ label, value, gold }: { label: string; value: string; gold?: boolean }) {
   return (
-    <Card className="p-4">
-      <div className="text-[11px] text-muted-foreground">{label}</div>
-      <div className={`text-xl font-bold mt-1 ${gold ? "text-gold" : ""}`}>{value}</div>
+    <Card className="p-3 lg:p-4">
+      <div className="text-[10px] lg:text-[11px] text-muted-foreground truncate">{label}</div>
+      <div className={`text-base lg:text-xl font-bold mt-1 truncate ${gold ? "text-gold" : ""}`}>{value}</div>
     </Card>
   );
 }
