@@ -72,7 +72,7 @@ function DecorationsPage() {
       {isLoading ? <LoadingState rows={3} /> : list.length === 0 ? (
         <EmptyState title="لا توجد ديكورات مطابقة" description="جرّب تغيير البحث أو التصنيف" />
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {list.map(d => {
             const available = Math.max(d.total_qty - d.booked_qty, 0);
             const pct = d.total_qty > 0 ? (available / d.total_qty) * 100 : 0;
