@@ -169,7 +169,7 @@ export function AppLayout() {
           </div>
         </header>
 
-        <div className="flex-1 px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8 pb-24 md:pb-8 animate-fade-in">
+        <div className="flex-1 min-w-0 max-w-full overflow-x-hidden px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8 pb-28 md:pb-8 animate-fade-in">
           <Outlet />
         </div>
       </main>
