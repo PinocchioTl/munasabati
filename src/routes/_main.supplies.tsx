@@ -2,8 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Card, SectionHeader, Button, LoadingState, EmptyState } from "@/components/ui-bits";
 import { useSupplies, useBookings, supplyAvailableOnDate, formatSAR, type Supply } from "@/lib/db";
 import { SupplyDialog } from "@/components/ItemDialog";
-import { Plus, AlertTriangle, Package, Search, Pencil, CalendarClock } from "lucide-react";
+import { Plus, AlertTriangle, Package, Pencil, CalendarClock } from "lucide-react";
 import { useState, useMemo } from "react";
+import { SearchBox } from "@/components/SearchBox";
+import { matches } from "@/lib/search";
 
 export const Route = createFileRoute("/_main/supplies")({
   component: SuppliesPage,
@@ -25,7 +27,7 @@ function SuppliesPage() {
 
   const filtered = useMemo(() => supplies.filter(s => {
     if (cat !== "الكل" && s.category !== cat) return false;
-    if (query && !s.name.includes(query) && !s.supplier?.includes(query)) return false;
+    if (!matches(query, [s.name, s.supplier, s.category, s.notes])) return false;
     if (statusFilter !== "all") {
       const avail = supplyAvailableOnDate(s, checkDate, bookings);
       const pct = s.total_qty > 0 ? (avail / s.total_qty) * 100 : 0;
@@ -76,12 +78,8 @@ function SuppliesPage() {
           <input type="date" value={checkDate} onChange={(e) => setCheckDate(e.target.value)}
             className="bg-secondary/60 rounded-xl px-2 py-1.5 text-xs lg:text-sm outline-none focus:ring-2 focus:ring-ring min-w-0 flex-1 lg:flex-none" />
         </div>
-        <div className="flex-1 relative min-w-0">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-secondary/60 rounded-xl pr-10 pl-4 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-            placeholder="ابحث بالاسم أو المورد..." />
-        </div>
+        <SearchBox value={query} onChange={setQuery} className="flex-1 min-w-0"
+          placeholder="ابحث بالاسم، المورد، التصنيف..." />
         <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-1 px-1">
           {categories.map((c) => (
             <button key={c} onClick={() => setCat(c)} className={`px-3 py-1.5 rounded-xl text-[11px] lg:text-xs font-semibold whitespace-nowrap transition ${
