@@ -32,7 +32,7 @@ export const formatSAR = (n: number) =>
 export interface Decoration {
   id: string; name: string; category: string | null; images: string[];
   total_qty: number; booked_qty: number; price: number; status: ItemStatus;
-  bookings_count: number; total_revenue: number;
+  bookings_count: number; total_revenue: number; description?: string | null;
 }
 export interface Supply {
   id: string; name: string; category: string | null;
@@ -46,7 +46,7 @@ export interface EventTypeRow {
 }
 export interface Client {
   id: string; name: string; phone: string | null; address: string | null;
-  is_vip: boolean; notes: string | null;
+  is_vip: boolean; notes: string | null; email?: string | null;
   events_count: number; total_paid: number; last_event_date: string | null;
 }
 export interface BookingDecoration { decoration_id: string; qty: number; decoration?: Decoration; }
