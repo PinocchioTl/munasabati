@@ -2,8 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Card, SectionHeader, Button, LoadingState, EmptyState } from "@/components/ui-bits";
 import { useDecorations, formatSAR, itemStatusLabels, type Decoration } from "@/lib/db";
 import { DecorationDialog } from "@/components/ItemDialog";
-import { Plus, Search, Flame, TrendingUp, Pencil, X } from "lucide-react";
+import { Plus, Flame, TrendingUp, Pencil, X } from "lucide-react";
 import { useState, useMemo } from "react";
+import { SearchBox } from "@/components/SearchBox";
+import { matches } from "@/lib/search";
 
 export const Route = createFileRoute("/_main/decorations")({
   component: DecorationsPage,
@@ -28,7 +30,7 @@ function DecorationsPage() {
 
   const list = useMemo(() => decorations.filter(d => {
     if (cat !== "الكل" && d.category !== cat) return false;
-    if (query && !d.name.includes(query)) return false;
+    if (!matches(query, [d.name, d.category])) return false;
     return true;
   }), [decorations, cat, query]);
 
@@ -55,12 +57,8 @@ function DecorationsPage() {
       </div>
 
       <Card className="p-4 flex flex-col lg:flex-row gap-3">
-        <div className="flex-1 relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-secondary/60 rounded-xl pr-10 pl-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
-            placeholder="ابحث عن ديكور..." />
-        </div>
+        <SearchBox value={query} onChange={setQuery} className="flex-1"
+          placeholder="ابحث بالاسم أو التصنيف..." />
         <div className="flex gap-2 overflow-x-auto">
           {categories.map((c) => (
             <button key={c} onClick={() => setCat(c)} className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition ${

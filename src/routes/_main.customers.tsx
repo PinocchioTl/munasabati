@@ -6,11 +6,13 @@ import {
   type Client, type ClientTier,
 } from "@/lib/db";
 import {
-  Phone, MapPin, Crown, Plus, MessageCircle, Search, X, Calendar,
+  Phone, MapPin, Crown, Plus, MessageCircle, X, Calendar,
   Edit3, Trash2, TrendingUp, Wallet, Sparkles, UserPlus,
 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
+import { SearchBox } from "@/components/SearchBox";
+import { matches } from "@/lib/search";
 
 export const Route = createFileRoute("/_main/customers")({
   component: CustomersPage,
@@ -51,7 +53,7 @@ function CustomersPage() {
 
   const filtered = useMemo(() => {
     let list = enriched.filter(c => {
-      if (query && !c.name.includes(query) && !c.phone?.includes(query)) return false;
+      if (!matches(query, [c.name, c.phone, c.address, c.notes])) return false;
       if (filter === "vip" && c.tier !== "vip") return false;
       if (filter === "active" && c.tier !== "active") return false;
       if (filter === "new" && c.tier !== "new") return false;
@@ -96,13 +98,9 @@ function CustomersPage() {
         }
       />
 
-      <Card className="p-4 flex flex-col lg:flex-row gap-3">
-        <div className="flex-1 relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-secondary/60 rounded-xl pr-10 pl-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
-            placeholder="ابحث بالاسم أو رقم الهاتف..." />
-        </div>
+      <Card className="p-4 flex flex-col lg:flex-row gap-3 sticky top-14 sm:top-16 z-20 bg-card/95 backdrop-blur">
+        <SearchBox value={query} onChange={setQuery} className="flex-1"
+          placeholder="ابحث بالاسم، الهاتف، العنوان..." />
         <div className="flex gap-1.5 flex-wrap">
           {tabs.map(t => (
             <button key={t.id} onClick={() => setFilter(t.id)}
