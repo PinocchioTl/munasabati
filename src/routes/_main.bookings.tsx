@@ -58,7 +58,7 @@ function BookingsPage() {
       }
     }
     return true;
-  }), [bookings, filter, eventFilter, query, dateRange]);
+  }), [bookings, filter, eventFilter, query, dateRange, eventTypeMap]);
 
   const stats = useMemo(() => {
     const total = bookings.reduce((s, b) => s + +b.total_price, 0);
