@@ -27,7 +27,7 @@ function SuppliesPage() {
 
   const filtered = useMemo(() => supplies.filter(s => {
     if (cat !== "الكل" && s.category !== cat) return false;
-    if (!matches(query, [s.name, s.supplier, s.category, s.notes])) return false;
+    if (!matches(query, [s.name, s.category])) return false;
     if (statusFilter !== "all") {
       const avail = supplyAvailableOnDate(s, checkDate, bookings);
       const pct = s.total_qty > 0 ? (avail / s.total_qty) * 100 : 0;
@@ -79,7 +79,7 @@ function SuppliesPage() {
             className="bg-secondary/60 rounded-xl px-2 py-1.5 text-xs lg:text-sm outline-none focus:ring-2 focus:ring-ring min-w-0 flex-1 lg:flex-none" />
         </div>
         <SearchBox value={query} onChange={setQuery} className="flex-1 min-w-0"
-          placeholder="ابحث بالاسم، المورد، التصنيف..." />
+          placeholder="ابحث باسم المستلزم أو التصنيف..." />
         <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-1 px-1">
           {categories.map((c) => (
             <button key={c} onClick={() => setCat(c)} className={`px-3 py-1.5 rounded-xl text-[11px] lg:text-xs font-semibold whitespace-nowrap transition ${

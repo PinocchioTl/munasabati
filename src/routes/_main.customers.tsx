@@ -53,7 +53,7 @@ function CustomersPage() {
 
   const filtered = useMemo(() => {
     let list = enriched.filter(c => {
-      if (!matches(query, [c.name, c.phone, c.address, c.notes])) return false;
+      if (!matches(query, [c.name, c.phone, c.email, c.address, c.notes])) return false;
       if (filter === "vip" && c.tier !== "vip") return false;
       if (filter === "active" && c.tier !== "active") return false;
       if (filter === "new" && c.tier !== "new") return false;
@@ -100,7 +100,7 @@ function CustomersPage() {
 
       <Card className="p-4 flex flex-col lg:flex-row gap-3 sticky top-14 sm:top-16 z-20 bg-card/95 backdrop-blur">
         <SearchBox value={query} onChange={setQuery} className="flex-1"
-          placeholder="ابحث بالاسم، الهاتف، العنوان..." />
+          placeholder="ابحث بالاسم، الهاتف، البريد الإلكتروني..." />
         <div className="flex gap-1.5 flex-wrap">
           {tabs.map(t => (
             <button key={t.id} onClick={() => setFilter(t.id)}

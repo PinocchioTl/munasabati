@@ -4,7 +4,7 @@ import { Card, SectionHeader, Button, LoadingState, EmptyState } from "@/compone
 import { BookingDialog } from "@/components/BookingDialog";
 import {
   useBookings, useEventTypes, useUpdateBookingStatus,
-  formatSAR, statusLabels, BookingStatus,
+  formatSAR, statusLabels, eventTypeLabels, BookingStatus,
 } from "@/lib/db";
 import { Plus, Phone, Calendar, Clock, LayoutGrid, List, ChevronDown, Pencil } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -33,7 +33,16 @@ function BookingsPage() {
   const filtered = useMemo(() => bookings.filter(b => {
     if (filter !== "all" && b.status !== filter) return false;
     if (eventFilter !== "all" && b.event_type !== eventFilter) return false;
-    if (!matches(query, [b.customer_name, b.code, b.phone, b.event_type, b.location, b.notes])) return false;
+    if (!matches(query, [
+      b.customer_name,
+      b.phone,
+      b.event_type,
+      eventTypeMap[b.event_type]?.label,
+      eventTypeLabels[b.event_type],
+      b.location,
+      b.code,
+      b.notes,
+    ])) return false;
     if (dateRange !== "all") {
       const d = new Date(b.event_date + "T12:00:00");
       const now = new Date(); now.setHours(0,0,0,0);
@@ -49,7 +58,7 @@ function BookingsPage() {
       }
     }
     return true;
-  }), [bookings, filter, eventFilter, query, dateRange]);
+  }), [bookings, filter, eventFilter, query, dateRange, eventTypeMap]);
 
   const stats = useMemo(() => {
     const total = bookings.reduce((s, b) => s + +b.total_price, 0);
