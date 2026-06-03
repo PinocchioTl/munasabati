@@ -6,8 +6,10 @@ import {
   useBookings, useEventTypes, useUpdateBookingStatus,
   formatSAR, statusLabels, BookingStatus,
 } from "@/lib/db";
-import { Search, Plus, Phone, Calendar, Clock, LayoutGrid, List, ChevronDown, Pencil } from "lucide-react";
+import { Plus, Phone, Calendar, Clock, LayoutGrid, List, ChevronDown, Pencil } from "lucide-react";
 import { useState, useMemo } from "react";
+import { SearchBox } from "@/components/SearchBox";
+import { matches } from "@/lib/search";
 
 export const Route = createFileRoute("/_main/bookings")({
   component: BookingsPage,
@@ -31,7 +33,7 @@ function BookingsPage() {
   const filtered = useMemo(() => bookings.filter(b => {
     if (filter !== "all" && b.status !== filter) return false;
     if (eventFilter !== "all" && b.event_type !== eventFilter) return false;
-    if (query && !b.customer_name.includes(query) && !b.code?.includes(query) && !b.phone?.includes(query)) return false;
+    if (!matches(query, [b.customer_name, b.code, b.phone, b.event_type, b.location, b.notes])) return false;
     if (dateRange !== "all") {
       const d = new Date(b.event_date + "T12:00:00");
       const now = new Date(); now.setHours(0,0,0,0);
@@ -94,12 +96,8 @@ function BookingsPage() {
       <Card className="p-3 lg:p-4 sticky top-14 sm:top-16 z-20 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
         <div className="flex flex-col gap-3">
           <div className="flex flex-col lg:flex-row gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <input value={query} onChange={(e) => setQuery(e.target.value)}
-                className="w-full bg-secondary/60 rounded-xl pr-10 pl-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
-                placeholder="ابحث باسم أو هاتف أو رقم حجز..." />
-            </div>
+            <SearchBox value={query} onChange={setQuery} className="flex-1"
+              placeholder="ابحث باسم، هاتف، رقم حجز، نوع مناسبة، موقع..." />
             <div className="flex gap-2">
               <select value={eventFilter} onChange={(e) => setEventFilter(e.target.value as any)}
                 className="flex-1 lg:flex-none bg-secondary/60 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring min-w-0">
