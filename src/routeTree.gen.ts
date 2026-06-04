@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as MainRouteImport } from './routes/_main'
 import { Route as MainIndexRouteImport } from './routes/_main.index'
+import { Route as BookingSlugRouteImport } from './routes/booking.$slug'
 import { Route as MainSuppliesRouteImport } from './routes/_main.supplies'
 import { Route as MainSettingsRouteImport } from './routes/_main.settings'
 import { Route as MainProfitsRouteImport } from './routes/_main.profits'
@@ -53,6 +54,11 @@ const MainIndexRoute = MainIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => MainRoute,
+} as any)
+const BookingSlugRoute = BookingSlugRouteImport.update({
+  id: '/booking/$slug',
+  path: '/booking/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const MainSuppliesRoute = MainSuppliesRouteImport.update({
   id: '/supplies',
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/profits': typeof MainProfitsRoute
   '/settings': typeof MainSettingsRoute
   '/supplies': typeof MainSuppliesRoute
+  '/booking/$slug': typeof BookingSlugRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/profits': typeof MainProfitsRoute
   '/settings': typeof MainSettingsRoute
   '/supplies': typeof MainSuppliesRoute
+  '/booking/$slug': typeof BookingSlugRoute
   '/': typeof MainIndexRoute
 }
 export interface FileRoutesById {
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/_main/profits': typeof MainProfitsRoute
   '/_main/settings': typeof MainSettingsRoute
   '/_main/supplies': typeof MainSuppliesRoute
+  '/booking/$slug': typeof BookingSlugRoute
   '/_main/': typeof MainIndexRoute
 }
 export interface FileRouteTypes {
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
     | '/profits'
     | '/settings'
     | '/supplies'
+    | '/booking/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/profits'
     | '/settings'
     | '/supplies'
+    | '/booking/$slug'
     | '/'
   id:
     | '__root__'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/_main/profits'
     | '/_main/settings'
     | '/_main/supplies'
+    | '/booking/$slug'
     | '/_main/'
   fileRoutesById: FileRoutesById
 }
@@ -208,6 +220,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  BookingSlugRoute: typeof BookingSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -253,6 +266,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof MainIndexRouteImport
       parentRoute: typeof MainRoute
+    }
+    '/booking/$slug': {
+      id: '/booking/$slug'
+      path: '/booking/$slug'
+      fullPath: '/booking/$slug'
+      preLoaderRoute: typeof BookingSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_main/supplies': {
       id: '/_main/supplies'
@@ -354,7 +374,18 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  BookingSlugRoute: BookingSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
