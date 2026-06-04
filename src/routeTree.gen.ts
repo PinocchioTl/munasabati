@@ -26,6 +26,7 @@ import { Route as MainCalendarRouteImport } from './routes/_main.calendar'
 import { Route as MainBookingsRouteImport } from './routes/_main.bookings'
 import { Route as MainAnalyticsRouteImport } from './routes/_main.analytics'
 import { Route as BookingSlugIndexRouteImport } from './routes/booking.$slug.index'
+import { Route as BookingSlugDecorationsRouteImport } from './routes/booking.$slug.decorations'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -111,6 +112,11 @@ const BookingSlugIndexRoute = BookingSlugIndexRouteImport.update({
   path: '/',
   getParentRoute: () => BookingSlugRoute,
 } as any)
+const BookingSlugDecorationsRoute = BookingSlugDecorationsRouteImport.update({
+  id: '/decorations',
+  path: '/decorations',
+  getParentRoute: () => BookingSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof MainIndexRoute
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof MainSettingsRoute
   '/supplies': typeof MainSuppliesRoute
   '/booking/$slug': typeof BookingSlugRouteWithChildren
+  '/booking/$slug/decorations': typeof BookingSlugDecorationsRoute
   '/booking/$slug/': typeof BookingSlugIndexRoute
 }
 export interface FileRoutesByTo {
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/settings': typeof MainSettingsRoute
   '/supplies': typeof MainSuppliesRoute
   '/': typeof MainIndexRoute
+  '/booking/$slug/decorations': typeof BookingSlugDecorationsRoute
   '/booking/$slug': typeof BookingSlugIndexRoute
 }
 export interface FileRoutesById {
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/_main/supplies': typeof MainSuppliesRoute
   '/booking/$slug': typeof BookingSlugRouteWithChildren
   '/_main/': typeof MainIndexRoute
+  '/booking/$slug/decorations': typeof BookingSlugDecorationsRoute
   '/booking/$slug/': typeof BookingSlugIndexRoute
 }
 export interface FileRouteTypes {
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/supplies'
     | '/booking/$slug'
+    | '/booking/$slug/decorations'
     | '/booking/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/supplies'
     | '/'
+    | '/booking/$slug/decorations'
     | '/booking/$slug'
   id:
     | '__root__'
@@ -221,6 +232,7 @@ export interface FileRouteTypes {
     | '/_main/supplies'
     | '/booking/$slug'
     | '/_main/'
+    | '/booking/$slug/decorations'
     | '/booking/$slug/'
   fileRoutesById: FileRoutesById
 }
@@ -354,6 +366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingSlugIndexRouteImport
       parentRoute: typeof BookingSlugRoute
     }
+    '/booking/$slug/decorations': {
+      id: '/booking/$slug/decorations'
+      path: '/decorations'
+      fullPath: '/booking/$slug/decorations'
+      preLoaderRoute: typeof BookingSlugDecorationsRouteImport
+      parentRoute: typeof BookingSlugRoute
+    }
   }
 }
 
@@ -386,10 +405,12 @@ const MainRouteChildren: MainRouteChildren = {
 const MainRouteWithChildren = MainRoute._addFileChildren(MainRouteChildren)
 
 interface BookingSlugRouteChildren {
+  BookingSlugDecorationsRoute: typeof BookingSlugDecorationsRoute
   BookingSlugIndexRoute: typeof BookingSlugIndexRoute
 }
 
 const BookingSlugRouteChildren: BookingSlugRouteChildren = {
+  BookingSlugDecorationsRoute: BookingSlugDecorationsRoute,
   BookingSlugIndexRoute: BookingSlugIndexRoute,
 }
 
