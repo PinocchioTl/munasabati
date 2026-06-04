@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as MainRouteImport } from './routes/_main'
 import { Route as MainIndexRouteImport } from './routes/_main.index'
+import { Route as BookingSlugRouteImport } from './routes/booking.$slug'
 import { Route as MainSuppliesRouteImport } from './routes/_main.supplies'
 import { Route as MainSettingsRouteImport } from './routes/_main.settings'
 import { Route as MainProfitsRouteImport } from './routes/_main.profits'
@@ -24,6 +25,11 @@ import { Route as MainCustomersRouteImport } from './routes/_main.customers'
 import { Route as MainCalendarRouteImport } from './routes/_main.calendar'
 import { Route as MainBookingsRouteImport } from './routes/_main.bookings'
 import { Route as MainAnalyticsRouteImport } from './routes/_main.analytics'
+import { Route as BookingSlugIndexRouteImport } from './routes/booking.$slug.index'
+import { Route as BookingSlugSuppliesRouteImport } from './routes/booking.$slug.supplies'
+import { Route as BookingSlugRequestRouteImport } from './routes/booking.$slug.request'
+import { Route as BookingSlugDecorationsRouteImport } from './routes/booking.$slug.decorations'
+import { Route as BookingSlugDecorationsIdRouteImport } from './routes/booking.$slug.decorations.$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -53,6 +59,11 @@ const MainIndexRoute = MainIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => MainRoute,
+} as any)
+const BookingSlugRoute = BookingSlugRouteImport.update({
+  id: '/booking/$slug',
+  path: '/booking/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const MainSuppliesRoute = MainSuppliesRouteImport.update({
   id: '/supplies',
@@ -99,6 +110,32 @@ const MainAnalyticsRoute = MainAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => MainRoute,
 } as any)
+const BookingSlugIndexRoute = BookingSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BookingSlugRoute,
+} as any)
+const BookingSlugSuppliesRoute = BookingSlugSuppliesRouteImport.update({
+  id: '/supplies',
+  path: '/supplies',
+  getParentRoute: () => BookingSlugRoute,
+} as any)
+const BookingSlugRequestRoute = BookingSlugRequestRouteImport.update({
+  id: '/request',
+  path: '/request',
+  getParentRoute: () => BookingSlugRoute,
+} as any)
+const BookingSlugDecorationsRoute = BookingSlugDecorationsRouteImport.update({
+  id: '/decorations',
+  path: '/decorations',
+  getParentRoute: () => BookingSlugRoute,
+} as any)
+const BookingSlugDecorationsIdRoute =
+  BookingSlugDecorationsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => BookingSlugDecorationsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof MainIndexRoute
@@ -115,6 +152,12 @@ export interface FileRoutesByFullPath {
   '/profits': typeof MainProfitsRoute
   '/settings': typeof MainSettingsRoute
   '/supplies': typeof MainSuppliesRoute
+  '/booking/$slug': typeof BookingSlugRouteWithChildren
+  '/booking/$slug/decorations': typeof BookingSlugDecorationsRouteWithChildren
+  '/booking/$slug/request': typeof BookingSlugRequestRoute
+  '/booking/$slug/supplies': typeof BookingSlugSuppliesRoute
+  '/booking/$slug/': typeof BookingSlugIndexRoute
+  '/booking/$slug/decorations/$id': typeof BookingSlugDecorationsIdRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
@@ -131,6 +174,11 @@ export interface FileRoutesByTo {
   '/settings': typeof MainSettingsRoute
   '/supplies': typeof MainSuppliesRoute
   '/': typeof MainIndexRoute
+  '/booking/$slug/decorations': typeof BookingSlugDecorationsRouteWithChildren
+  '/booking/$slug/request': typeof BookingSlugRequestRoute
+  '/booking/$slug/supplies': typeof BookingSlugSuppliesRoute
+  '/booking/$slug': typeof BookingSlugIndexRoute
+  '/booking/$slug/decorations/$id': typeof BookingSlugDecorationsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -148,7 +196,13 @@ export interface FileRoutesById {
   '/_main/profits': typeof MainProfitsRoute
   '/_main/settings': typeof MainSettingsRoute
   '/_main/supplies': typeof MainSuppliesRoute
+  '/booking/$slug': typeof BookingSlugRouteWithChildren
   '/_main/': typeof MainIndexRoute
+  '/booking/$slug/decorations': typeof BookingSlugDecorationsRouteWithChildren
+  '/booking/$slug/request': typeof BookingSlugRequestRoute
+  '/booking/$slug/supplies': typeof BookingSlugSuppliesRoute
+  '/booking/$slug/': typeof BookingSlugIndexRoute
+  '/booking/$slug/decorations/$id': typeof BookingSlugDecorationsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -167,6 +221,12 @@ export interface FileRouteTypes {
     | '/profits'
     | '/settings'
     | '/supplies'
+    | '/booking/$slug'
+    | '/booking/$slug/decorations'
+    | '/booking/$slug/request'
+    | '/booking/$slug/supplies'
+    | '/booking/$slug/'
+    | '/booking/$slug/decorations/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -183,6 +243,11 @@ export interface FileRouteTypes {
     | '/settings'
     | '/supplies'
     | '/'
+    | '/booking/$slug/decorations'
+    | '/booking/$slug/request'
+    | '/booking/$slug/supplies'
+    | '/booking/$slug'
+    | '/booking/$slug/decorations/$id'
   id:
     | '__root__'
     | '/_main'
@@ -199,7 +264,13 @@ export interface FileRouteTypes {
     | '/_main/profits'
     | '/_main/settings'
     | '/_main/supplies'
+    | '/booking/$slug'
     | '/_main/'
+    | '/booking/$slug/decorations'
+    | '/booking/$slug/request'
+    | '/booking/$slug/supplies'
+    | '/booking/$slug/'
+    | '/booking/$slug/decorations/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -208,6 +279,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  BookingSlugRoute: typeof BookingSlugRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -253,6 +325,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof MainIndexRouteImport
       parentRoute: typeof MainRoute
+    }
+    '/booking/$slug': {
+      id: '/booking/$slug'
+      path: '/booking/$slug'
+      fullPath: '/booking/$slug'
+      preLoaderRoute: typeof BookingSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_main/supplies': {
       id: '/_main/supplies'
@@ -317,6 +396,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainAnalyticsRouteImport
       parentRoute: typeof MainRoute
     }
+    '/booking/$slug/': {
+      id: '/booking/$slug/'
+      path: '/'
+      fullPath: '/booking/$slug/'
+      preLoaderRoute: typeof BookingSlugIndexRouteImport
+      parentRoute: typeof BookingSlugRoute
+    }
+    '/booking/$slug/supplies': {
+      id: '/booking/$slug/supplies'
+      path: '/supplies'
+      fullPath: '/booking/$slug/supplies'
+      preLoaderRoute: typeof BookingSlugSuppliesRouteImport
+      parentRoute: typeof BookingSlugRoute
+    }
+    '/booking/$slug/request': {
+      id: '/booking/$slug/request'
+      path: '/request'
+      fullPath: '/booking/$slug/request'
+      preLoaderRoute: typeof BookingSlugRequestRouteImport
+      parentRoute: typeof BookingSlugRoute
+    }
+    '/booking/$slug/decorations': {
+      id: '/booking/$slug/decorations'
+      path: '/decorations'
+      fullPath: '/booking/$slug/decorations'
+      preLoaderRoute: typeof BookingSlugDecorationsRouteImport
+      parentRoute: typeof BookingSlugRoute
+    }
+    '/booking/$slug/decorations/$id': {
+      id: '/booking/$slug/decorations/$id'
+      path: '/$id'
+      fullPath: '/booking/$slug/decorations/$id'
+      preLoaderRoute: typeof BookingSlugDecorationsIdRouteImport
+      parentRoute: typeof BookingSlugDecorationsRoute
+    }
   }
 }
 
@@ -348,23 +462,46 @@ const MainRouteChildren: MainRouteChildren = {
 
 const MainRouteWithChildren = MainRoute._addFileChildren(MainRouteChildren)
 
+interface BookingSlugDecorationsRouteChildren {
+  BookingSlugDecorationsIdRoute: typeof BookingSlugDecorationsIdRoute
+}
+
+const BookingSlugDecorationsRouteChildren: BookingSlugDecorationsRouteChildren =
+  {
+    BookingSlugDecorationsIdRoute: BookingSlugDecorationsIdRoute,
+  }
+
+const BookingSlugDecorationsRouteWithChildren =
+  BookingSlugDecorationsRoute._addFileChildren(
+    BookingSlugDecorationsRouteChildren,
+  )
+
+interface BookingSlugRouteChildren {
+  BookingSlugDecorationsRoute: typeof BookingSlugDecorationsRouteWithChildren
+  BookingSlugRequestRoute: typeof BookingSlugRequestRoute
+  BookingSlugSuppliesRoute: typeof BookingSlugSuppliesRoute
+  BookingSlugIndexRoute: typeof BookingSlugIndexRoute
+}
+
+const BookingSlugRouteChildren: BookingSlugRouteChildren = {
+  BookingSlugDecorationsRoute: BookingSlugDecorationsRouteWithChildren,
+  BookingSlugRequestRoute: BookingSlugRequestRoute,
+  BookingSlugSuppliesRoute: BookingSlugSuppliesRoute,
+  BookingSlugIndexRoute: BookingSlugIndexRoute,
+}
+
+const BookingSlugRouteWithChildren = BookingSlugRoute._addFileChildren(
+  BookingSlugRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   MainRoute: MainRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  BookingSlugRoute: BookingSlugRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
