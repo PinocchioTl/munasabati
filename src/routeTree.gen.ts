@@ -25,6 +25,7 @@ import { Route as MainCustomersRouteImport } from './routes/_main.customers'
 import { Route as MainCalendarRouteImport } from './routes/_main.calendar'
 import { Route as MainBookingsRouteImport } from './routes/_main.bookings'
 import { Route as MainAnalyticsRouteImport } from './routes/_main.analytics'
+import { Route as BookingSlugIndexRouteImport } from './routes/booking.$slug.index'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -105,6 +106,11 @@ const MainAnalyticsRoute = MainAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => MainRoute,
 } as any)
+const BookingSlugIndexRoute = BookingSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BookingSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof MainIndexRoute
@@ -121,7 +127,8 @@ export interface FileRoutesByFullPath {
   '/profits': typeof MainProfitsRoute
   '/settings': typeof MainSettingsRoute
   '/supplies': typeof MainSuppliesRoute
-  '/booking/$slug': typeof BookingSlugRoute
+  '/booking/$slug': typeof BookingSlugRouteWithChildren
+  '/booking/$slug/': typeof BookingSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
@@ -137,8 +144,8 @@ export interface FileRoutesByTo {
   '/profits': typeof MainProfitsRoute
   '/settings': typeof MainSettingsRoute
   '/supplies': typeof MainSuppliesRoute
-  '/booking/$slug': typeof BookingSlugRoute
   '/': typeof MainIndexRoute
+  '/booking/$slug': typeof BookingSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -156,8 +163,9 @@ export interface FileRoutesById {
   '/_main/profits': typeof MainProfitsRoute
   '/_main/settings': typeof MainSettingsRoute
   '/_main/supplies': typeof MainSuppliesRoute
-  '/booking/$slug': typeof BookingSlugRoute
+  '/booking/$slug': typeof BookingSlugRouteWithChildren
   '/_main/': typeof MainIndexRoute
+  '/booking/$slug/': typeof BookingSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -177,6 +185,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/supplies'
     | '/booking/$slug'
+    | '/booking/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -192,8 +201,8 @@ export interface FileRouteTypes {
     | '/profits'
     | '/settings'
     | '/supplies'
-    | '/booking/$slug'
     | '/'
+    | '/booking/$slug'
   id:
     | '__root__'
     | '/_main'
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/_main/supplies'
     | '/booking/$slug'
     | '/_main/'
+    | '/booking/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -220,7 +230,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
-  BookingSlugRoute: typeof BookingSlugRoute
+  BookingSlugRoute: typeof BookingSlugRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -337,6 +347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainAnalyticsRouteImport
       parentRoute: typeof MainRoute
     }
+    '/booking/$slug/': {
+      id: '/booking/$slug/'
+      path: '/'
+      fullPath: '/booking/$slug/'
+      preLoaderRoute: typeof BookingSlugIndexRouteImport
+      parentRoute: typeof BookingSlugRoute
+    }
   }
 }
 
@@ -368,14 +385,36 @@ const MainRouteChildren: MainRouteChildren = {
 
 const MainRouteWithChildren = MainRoute._addFileChildren(MainRouteChildren)
 
+interface BookingSlugRouteChildren {
+  BookingSlugIndexRoute: typeof BookingSlugIndexRoute
+}
+
+const BookingSlugRouteChildren: BookingSlugRouteChildren = {
+  BookingSlugIndexRoute: BookingSlugIndexRoute,
+}
+
+const BookingSlugRouteWithChildren = BookingSlugRoute._addFileChildren(
+  BookingSlugRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   MainRoute: MainRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
-  BookingSlugRoute: BookingSlugRoute,
+  BookingSlugRoute: BookingSlugRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
