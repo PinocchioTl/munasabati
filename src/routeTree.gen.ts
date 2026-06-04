@@ -26,6 +26,7 @@ import { Route as MainCalendarRouteImport } from './routes/_main.calendar'
 import { Route as MainBookingsRouteImport } from './routes/_main.bookings'
 import { Route as MainAnalyticsRouteImport } from './routes/_main.analytics'
 import { Route as BookingSlugIndexRouteImport } from './routes/booking.$slug.index'
+import { Route as BookingSlugSuppliesRouteImport } from './routes/booking.$slug.supplies'
 import { Route as BookingSlugDecorationsRouteImport } from './routes/booking.$slug.decorations'
 import { Route as BookingSlugDecorationsIdRouteImport } from './routes/booking.$slug.decorations.$id'
 
@@ -113,6 +114,11 @@ const BookingSlugIndexRoute = BookingSlugIndexRouteImport.update({
   path: '/',
   getParentRoute: () => BookingSlugRoute,
 } as any)
+const BookingSlugSuppliesRoute = BookingSlugSuppliesRouteImport.update({
+  id: '/supplies',
+  path: '/supplies',
+  getParentRoute: () => BookingSlugRoute,
+} as any)
 const BookingSlugDecorationsRoute = BookingSlugDecorationsRouteImport.update({
   id: '/decorations',
   path: '/decorations',
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/supplies': typeof MainSuppliesRoute
   '/booking/$slug': typeof BookingSlugRouteWithChildren
   '/booking/$slug/decorations': typeof BookingSlugDecorationsRouteWithChildren
+  '/booking/$slug/supplies': typeof BookingSlugSuppliesRoute
   '/booking/$slug/': typeof BookingSlugIndexRoute
   '/booking/$slug/decorations/$id': typeof BookingSlugDecorationsIdRoute
 }
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/supplies': typeof MainSuppliesRoute
   '/': typeof MainIndexRoute
   '/booking/$slug/decorations': typeof BookingSlugDecorationsRouteWithChildren
+  '/booking/$slug/supplies': typeof BookingSlugSuppliesRoute
   '/booking/$slug': typeof BookingSlugIndexRoute
   '/booking/$slug/decorations/$id': typeof BookingSlugDecorationsIdRoute
 }
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/booking/$slug': typeof BookingSlugRouteWithChildren
   '/_main/': typeof MainIndexRoute
   '/booking/$slug/decorations': typeof BookingSlugDecorationsRouteWithChildren
+  '/booking/$slug/supplies': typeof BookingSlugSuppliesRoute
   '/booking/$slug/': typeof BookingSlugIndexRoute
   '/booking/$slug/decorations/$id': typeof BookingSlugDecorationsIdRoute
 }
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/supplies'
     | '/booking/$slug'
     | '/booking/$slug/decorations'
+    | '/booking/$slug/supplies'
     | '/booking/$slug/'
     | '/booking/$slug/decorations/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/supplies'
     | '/'
     | '/booking/$slug/decorations'
+    | '/booking/$slug/supplies'
     | '/booking/$slug'
     | '/booking/$slug/decorations/$id'
   id:
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/booking/$slug'
     | '/_main/'
     | '/booking/$slug/decorations'
+    | '/booking/$slug/supplies'
     | '/booking/$slug/'
     | '/booking/$slug/decorations/$id'
   fileRoutesById: FileRoutesById
@@ -379,6 +391,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingSlugIndexRouteImport
       parentRoute: typeof BookingSlugRoute
     }
+    '/booking/$slug/supplies': {
+      id: '/booking/$slug/supplies'
+      path: '/supplies'
+      fullPath: '/booking/$slug/supplies'
+      preLoaderRoute: typeof BookingSlugSuppliesRouteImport
+      parentRoute: typeof BookingSlugRoute
+    }
     '/booking/$slug/decorations': {
       id: '/booking/$slug/decorations'
       path: '/decorations'
@@ -440,11 +459,13 @@ const BookingSlugDecorationsRouteWithChildren =
 
 interface BookingSlugRouteChildren {
   BookingSlugDecorationsRoute: typeof BookingSlugDecorationsRouteWithChildren
+  BookingSlugSuppliesRoute: typeof BookingSlugSuppliesRoute
   BookingSlugIndexRoute: typeof BookingSlugIndexRoute
 }
 
 const BookingSlugRouteChildren: BookingSlugRouteChildren = {
   BookingSlugDecorationsRoute: BookingSlugDecorationsRouteWithChildren,
+  BookingSlugSuppliesRoute: BookingSlugSuppliesRoute,
   BookingSlugIndexRoute: BookingSlugIndexRoute,
 }
 
