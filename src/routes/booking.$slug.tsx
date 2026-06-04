@@ -102,7 +102,7 @@ function TabLink({ slug, to, icon, label, exact }: { slug: string; to: string; i
   return (
     <Link
       to={to as any}
-      params={{ slug }}
+      params={{ slug } as any}
       activeOptions={{ exact: !!exact }}
       className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-bold whitespace-nowrap text-white/80 hover:text-white transition border-b-2 border-transparent [&.active]:border-[var(--bk-gold)] [&.active]:text-white"
       activeProps={{ className: "active" }}
