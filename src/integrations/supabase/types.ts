@@ -87,6 +87,57 @@ export type Database = {
           },
         ]
       }
+      booking_requests: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          decorations: Json
+          event_date: string
+          event_location: string | null
+          event_type: string
+          id: string
+          notes: string | null
+          owner_id: string
+          status: Database["public"]["Enums"]["booking_request_status"]
+          supplies: Json
+          updated_at: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          customer_name: string
+          customer_phone: string
+          decorations?: Json
+          event_date: string
+          event_location?: string | null
+          event_type?: string
+          id?: string
+          notes?: string | null
+          owner_id: string
+          status?: Database["public"]["Enums"]["booking_request_status"]
+          supplies?: Json
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string
+          decorations?: Json
+          event_date?: string
+          event_location?: string | null
+          event_type?: string
+          id?: string
+          notes?: string | null
+          owner_id?: string
+          status?: Database["public"]["Enums"]["booking_request_status"]
+          supplies?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       booking_supplies: {
         Row: {
           booking_id: string
@@ -248,6 +299,7 @@ export type Database = {
           bookings_count: number
           category: string | null
           created_at: string
+          description: string | null
           id: string
           images: string[] | null
           name: string
@@ -262,6 +314,7 @@ export type Database = {
           bookings_count?: number
           category?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           images?: string[] | null
           name: string
@@ -276,6 +329,7 @@ export type Database = {
           bookings_count?: number
           category?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           images?: string[] | null
           name?: string
@@ -544,8 +598,11 @@ export type Database = {
         Row: {
           accent_color: string | null
           background_color: string | null
+          booking_enabled: boolean
           company_name: string | null
+          cover_url: string | null
           created_at: string
+          description: string | null
           email: string | null
           full_name: string | null
           id: string
@@ -553,7 +610,10 @@ export type Database = {
           phone: string | null
           phone_verified: boolean
           primary_color: string | null
+          public_slug: string | null
           secondary_color: string | null
+          show_prices: boolean
+          tagline: string | null
           trial_ends_at: string
           trial_started_at: string
           updated_at: string
@@ -561,8 +621,11 @@ export type Database = {
         Insert: {
           accent_color?: string | null
           background_color?: string | null
+          booking_enabled?: boolean
           company_name?: string | null
+          cover_url?: string | null
           created_at?: string
+          description?: string | null
           email?: string | null
           full_name?: string | null
           id: string
@@ -570,7 +633,10 @@ export type Database = {
           phone?: string | null
           phone_verified?: boolean
           primary_color?: string | null
+          public_slug?: string | null
           secondary_color?: string | null
+          show_prices?: boolean
+          tagline?: string | null
           trial_ends_at?: string
           trial_started_at?: string
           updated_at?: string
@@ -578,8 +644,11 @@ export type Database = {
         Update: {
           accent_color?: string | null
           background_color?: string | null
+          booking_enabled?: boolean
           company_name?: string | null
+          cover_url?: string | null
           created_at?: string
+          description?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
@@ -587,7 +656,10 @@ export type Database = {
           phone?: string | null
           phone_verified?: boolean
           primary_color?: string | null
+          public_slug?: string | null
           secondary_color?: string | null
+          show_prices?: boolean
+          tagline?: string | null
           trial_ends_at?: string
           trial_started_at?: string
           updated_at?: string
@@ -715,6 +787,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      booking_request_status:
+        | "new"
+        | "reviewing"
+        | "accepted"
+        | "confirmed"
+        | "completed"
+        | "cancelled"
       booking_status:
         | "pending"
         | "confirmed"
@@ -853,6 +932,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      booking_request_status: [
+        "new",
+        "reviewing",
+        "accepted",
+        "confirmed",
+        "completed",
+        "cancelled",
+      ],
       booking_status: [
         "pending",
         "confirmed",
