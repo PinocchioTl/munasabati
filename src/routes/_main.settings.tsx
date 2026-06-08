@@ -401,8 +401,22 @@ function BackupSection() {
               </div>
             </div>
             <div className="text-xs bg-secondary/50 rounded-xl p-3 leading-relaxed">
-              تم تحميل النسخة بتاريخ <b>{new Date(pending.exported_at).toLocaleString("ar")}</b>.<br />
-              ستضيف: حجوزات {pending.tables.bookings?.length ?? 0} • زبائن {pending.tables.clients?.length ?? 0} • ديكورات {pending.tables.decorations?.length ?? 0} • مستلزمات {pending.tables.supplies?.length ?? 0}.
+              {(() => {
+                const isNew = "data" in pending && (pending as any).data;
+                const d = isNew ? (pending as any).data : null;
+                const t = !isNew ? (pending as any).tables : null;
+                const date = isNew ? (pending as any).export_date : (pending as any).exported_at;
+                const bookings = (d?.bookings ?? t?.bookings ?? []).length;
+                const customers = (d?.customers ?? t?.clients ?? []).length;
+                const decorations = (d?.decorations ?? t?.decorations ?? []).length;
+                const supplies = (d?.supplies ?? t?.supplies ?? []).length;
+                return (
+                  <>
+                    تم تحميل النسخة بتاريخ <b>{date ? new Date(date).toLocaleString("ar") : "—"}</b>.<br />
+                    ستضيف: حجوزات {bookings} • زبائن {customers} • ديكورات {decorations} • مستلزمات {supplies}.
+                  </>
+                );
+              })()}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <Button variant="outline" disabled={!!busy} onClick={() => runImport("merge")}>
