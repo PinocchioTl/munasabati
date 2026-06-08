@@ -304,8 +304,8 @@ function BackupSection() {
       setBusy("export");
       const bundle = await exportAllData();
       downloadBundle(bundle);
-      const counts = Object.entries(bundle.tables)
-        .map(([k, v]) => `${k}: ${v?.length ?? 0}`).join(" • ");
+      const counts = Object.entries(bundle.data)
+        .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.length : 0}`).join(" • ");
       toast.success("تم تصدير النسخة الاحتياطية", { description: counts });
     } catch (e: any) {
       toast.error("فشل التصدير", { description: e.message });
@@ -324,7 +324,9 @@ function BackupSection() {
       try {
         const text = await f.text();
         const parsed = JSON.parse(text) as BackupBundle;
-        if (parsed?.app !== "munasabati" || !parsed?.tables) {
+        const valid = parsed?.app === "munasabati" &&
+          (("data" in parsed && parsed.data) || ("tables" in parsed && (parsed as any).tables));
+        if (!valid) {
           throw new Error("الملف ليس نسخة احتياطية صحيحة لـ Munasabati");
         }
         setPending(parsed);
@@ -342,7 +344,7 @@ function BackupSection() {
       const res = await importBundle(pending, mode);
       await qc.invalidateQueries();
       toast.success(mode === "replace" ? "تم استبدال البيانات" : "تم دمج البيانات",
-        { description: `حجوزات: ${res.bookings} • زبائن: ${res.clients} • ديكورات: ${res.decorations} • مستلزمات: ${res.supplies}` });
+        { description: `حجوزات: ${res.bookings} • زبائن: ${res.customers} • ديكورات: ${res.decorations} • مستلزمات: ${res.supplies} • فواتير: ${res.invoices}` });
       setPending(null);
     } catch (e: any) {
       toast.error("فشل الاستيراد", { description: e.message });
@@ -399,8 +401,22 @@ function BackupSection() {
               </div>
             </div>
             <div className="text-xs bg-secondary/50 rounded-xl p-3 leading-relaxed">
-              تم تحميل النسخة بتاريخ <b>{new Date(pending.exported_at).toLocaleString("ar")}</b>.<br />
-              ستضيف: حجوزات {pending.tables.bookings?.length ?? 0} • زبائن {pending.tables.clients?.length ?? 0} • ديكورات {pending.tables.decorations?.length ?? 0} • مستلزمات {pending.tables.supplies?.length ?? 0}.
+              {(() => {
+                const isNew = "data" in pending && (pending as any).data;
+                const d = isNew ? (pending as any).data : null;
+                const t = !isNew ? (pending as any).tables : null;
+                const date = isNew ? (pending as any).export_date : (pending as any).exported_at;
+                const bookings = (d?.bookings ?? t?.bookings ?? []).length;
+                const customers = (d?.customers ?? t?.clients ?? []).length;
+                const decorations = (d?.decorations ?? t?.decorations ?? []).length;
+                const supplies = (d?.supplies ?? t?.supplies ?? []).length;
+                return (
+                  <>
+                    تم تحميل النسخة بتاريخ <b>{date ? new Date(date).toLocaleString("ar") : "—"}</b>.<br />
+                    ستضيف: حجوزات {bookings} • زبائن {customers} • ديكورات {decorations} • مستلزمات {supplies}.
+                  </>
+                );
+              })()}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <Button variant="outline" disabled={!!busy} onClick={() => runImport("merge")}>
