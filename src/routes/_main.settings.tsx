@@ -304,8 +304,8 @@ function BackupSection() {
       setBusy("export");
       const bundle = await exportAllData();
       downloadBundle(bundle);
-      const counts = Object.entries(bundle.tables)
-        .map(([k, v]) => `${k}: ${v?.length ?? 0}`).join(" • ");
+      const counts = Object.entries(bundle.data)
+        .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.length : 0}`).join(" • ");
       toast.success("تم تصدير النسخة الاحتياطية", { description: counts });
     } catch (e: any) {
       toast.error("فشل التصدير", { description: e.message });
@@ -324,7 +324,9 @@ function BackupSection() {
       try {
         const text = await f.text();
         const parsed = JSON.parse(text) as BackupBundle;
-        if (parsed?.app !== "munasabati" || !parsed?.tables) {
+        const valid = parsed?.app === "munasabati" &&
+          (("data" in parsed && parsed.data) || ("tables" in parsed && (parsed as any).tables));
+        if (!valid) {
           throw new Error("الملف ليس نسخة احتياطية صحيحة لـ Munasabati");
         }
         setPending(parsed);
@@ -342,7 +344,7 @@ function BackupSection() {
       const res = await importBundle(pending, mode);
       await qc.invalidateQueries();
       toast.success(mode === "replace" ? "تم استبدال البيانات" : "تم دمج البيانات",
-        { description: `حجوزات: ${res.bookings} • زبائن: ${res.clients} • ديكورات: ${res.decorations} • مستلزمات: ${res.supplies}` });
+        { description: `حجوزات: ${res.bookings} • زبائن: ${res.customers} • ديكورات: ${res.decorations} • مستلزمات: ${res.supplies} • فواتير: ${res.invoices}` });
       setPending(null);
     } catch (e: any) {
       toast.error("فشل الاستيراد", { description: e.message });
