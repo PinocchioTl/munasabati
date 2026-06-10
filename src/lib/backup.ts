@@ -1,24 +1,30 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Structured Backup v1.0 — Munasabati
+ * Structured Backup v1.1 — Munasabati
  *
  * One JSON file per owner. Relations are preserved using stable IDs.
  * - bookings[].items.decorations / supplies = [{ id, qty }]
  * - invoices[].booking_id links to a booking
  * - invoices[].items = invoice line items embedded
+ * - settings = profile/branding/booking settings for the owner
  *
  * Auto/computed fields (owner_id, remaining, net_profit, code, totals
  * recalculated by triggers) are stripped on export and re-derived on import.
+ *
+ * Import is RESILIENT:
+ *  - unknown/missing tables are skipped with a warning
+ *  - missing/extra fields are tolerated (PostgREST will reject only required ones)
+ *  - per-row failures collect warnings and do NOT abort the whole import
  */
 
 export type BackupV1 = {
-  version: "1.0";
+  version: "1.0" | "1.1";
   app: "munasabati";
   owner_id: string | null;
   export_date: string;
   data: {
-    event_types: any[];
+    event_types?: any[]; // legacy / deprecated
     customers: any[]; // = clients
     decorations: any[];
     supplies: any[];
@@ -26,6 +32,7 @@ export type BackupV1 = {
     invoices: any[]; // each has items[]
     profits: any[]; // = expenses
     notifications: any[];
+    settings?: any | null; // profile + branding + booking settings
   };
 };
 
@@ -91,12 +98,11 @@ export async function exportAllData(): Promise<BackupV1> {
   const owner_id = userData?.user?.id ?? null;
 
   const [
-    eventTypesRes, clientsRes, decorRes, suppRes,
+    clientsRes, decorRes, suppRes,
     bookingsRes, bdRes, bsRes,
     invoicesRes, invItemsRes,
-    expensesRes, notifsRes,
+    expensesRes, notifsRes, profileRes,
   ] = await Promise.all([
-    supabase.from("event_types").select("*"),
     supabase.from("clients").select("*"),
     supabase.from("decorations").select("*"),
     supabase.from("supplies").select("*"),
@@ -107,9 +113,12 @@ export async function exportAllData(): Promise<BackupV1> {
     supabase.from("invoice_items").select("*"),
     supabase.from("expenses").select("*"),
     supabase.from("notifications").select("*"),
+    owner_id
+      ? supabase.from("profiles").select("*").eq("id", owner_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null } as any),
   ]);
 
-  const err = [eventTypesRes, clientsRes, decorRes, suppRes, bookingsRes,
+  const err = [clientsRes, decorRes, suppRes, bookingsRes,
     bdRes, bsRes, invoicesRes, invItemsRes, expensesRes, notifsRes]
     .find(r => r.error)?.error;
   if (err) throw new Error(`فشل التصدير: ${err.message}`);
@@ -174,13 +183,16 @@ export async function exportAllData(): Promise<BackupV1> {
     return base;
   });
 
+  const profile = profileRes?.data
+    ? clean(profileRes.data as any, ["id", "email", "phone", "phone_verified"])
+    : null;
+
   return {
-    version: "1.0",
+    version: "1.1",
     app: "munasabati",
     owner_id,
     export_date: new Date().toISOString(),
     data: {
-      event_types: dedupeById(eventTypesRes.data as any[]).map(r => clean(r)),
       customers: dedupeById(clientsRes.data as any[]).map(r => clean(r)),
       decorations: dedupeById(decorRes.data as any[]).map(r => clean(r)),
       supplies: dedupeById(suppRes.data as any[]).map(r => clean(r)),
@@ -188,6 +200,7 @@ export async function exportAllData(): Promise<BackupV1> {
       invoices,
       profits: expenses,
       notifications: dedupeById(notifsRes.data as any[]).map(r => clean(r, ["read"])),
+      settings: profile,
     },
   };
 }
