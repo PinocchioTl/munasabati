@@ -305,7 +305,8 @@ function BackupSection() {
       const bundle = await exportAllData();
       downloadBundle(bundle);
       const counts = Object.entries(bundle.data)
-        .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.length : 0}`).join(" • ");
+        .filter(([, v]) => Array.isArray(v))
+        .map(([k, v]) => `${k}: ${(v as any[]).length}`).join(" • ");
       toast.success("تم تصدير النسخة الاحتياطية", { description: counts });
     } catch (e: any) {
       toast.error("فشل التصدير", { description: e.message });
