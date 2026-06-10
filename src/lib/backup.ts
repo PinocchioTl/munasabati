@@ -231,27 +231,36 @@ async function deleteAllOwn() {
   await supabase.from("decorations").delete().not("id", "is", null);
   await supabase.from("supplies").delete().not("id", "is", null);
   await supabase.from("clients").delete().not("id", "is", null);
-  await supabase.from("event_types").delete().not("id", "is", null);
 }
 
 function normalize(bundle: BackupBundle): BackupV1 {
   if (!bundle || (bundle as any).app !== "munasabati") {
     throw new Error("ملف غير صالح");
   }
-  if ((bundle as any).version === "1.0" && (bundle as any).data) {
-    return bundle as BackupV1;
+  if ((bundle as any).data && typeof (bundle as any).version === "string") {
+    // v1.0 / v1.1 — already structured
+    const b = bundle as BackupV1;
+    b.data = b.data || ({} as any);
+    b.data.customers = b.data.customers || (b.data as any).clients || [];
+    b.data.decorations = b.data.decorations || [];
+    b.data.supplies = b.data.supplies || [];
+    b.data.bookings = b.data.bookings || [];
+    b.data.invoices = b.data.invoices || [];
+    b.data.profits = b.data.profits || (b.data as any).expenses || [];
+    b.data.notifications = b.data.notifications || [];
+    return b;
   }
   // legacy v1 → v1.0
   const legacy = bundle as LegacyBundle;
   const t = legacy.tables || {};
   const decByBooking = new Map<string, { id: string; qty: number }[]>();
-  for (const r of t.booking_decorations || []) {
+  for (const r of (t.booking_decorations || []) as any[]) {
     const a = decByBooking.get(r.booking_id) || [];
     a.push({ id: r.decoration_id, qty: Number(r.qty) || 1 });
     decByBooking.set(r.booking_id, a);
   }
   const supByBooking = new Map<string, { id: string; qty: number }[]>();
-  for (const r of t.booking_supplies || []) {
+  for (const r of (t.booking_supplies || []) as any[]) {
     const a = supByBooking.get(r.booking_id) || [];
     a.push({ id: r.supply_id, qty: Number(r.qty) || 1 });
     supByBooking.set(r.booking_id, a);
@@ -261,12 +270,11 @@ function normalize(bundle: BackupBundle): BackupV1 {
     items: { decorations: decByBooking.get(b.id) || [], supplies: supByBooking.get(b.id) || [] },
   }));
   return {
-    version: "1.0",
+    version: "1.1",
     app: "munasabati",
     owner_id: null,
     export_date: legacy.exported_at || new Date().toISOString(),
     data: {
-      event_types: t.event_types || [],
       customers: t.clients || [],
       decorations: t.decorations || [],
       supplies: t.supplies || [],
@@ -274,26 +282,46 @@ function normalize(bundle: BackupBundle): BackupV1 {
       invoices: [],
       profits: t.expenses || [],
       notifications: t.notifications || [],
+      settings: null,
     },
   };
 }
 
-export async function importBundle(input: BackupBundle, mode: "merge" | "replace") {
+export type ImportReport = {
+  customers: number;
+  bookings: number;
+  decorations: number;
+  supplies: number;
+  invoices: number;
+  expenses: number;
+  notifications: number;
+  settings: boolean;
+  warnings: string[];
+};
+
+export async function importBundle(input: BackupBundle, mode: "merge" | "replace"): Promise<ImportReport> {
   const bundle = normalize(input);
+  const warnings: string[] = [];
+
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData?.user?.id) throw new Error("يجب تسجيل الدخول لاستيراد البيانات");
+
   if (mode === "replace") await deleteAllOwn();
 
   const remapClient = new Map<string, string>();
   const remapDecor = new Map<string, string>();
   const remapSupp = new Map<string, string>();
   const remapBooking = new Map<string, string>();
-  const remapEvent = new Map<string, string>();
   const remapInvoice = new Map<string, string>();
+
+  let okCustomers = 0, okDecor = 0, okSupp = 0, okBookings = 0,
+      okInvoices = 0, okExpenses = 0, okNotifs = 0;
 
   const insertOne = async (
     table: string,
     row: any,
     remap?: Map<string, string>,
-  ) => {
+  ): Promise<string | undefined> => {
     const oldId = row.id;
     const payload = clean(row, ["id", "items"]);
     const { data, error } = await supabase
@@ -301,16 +329,29 @@ export async function importBundle(input: BackupBundle, mode: "merge" | "replace
       .insert(payload as any)
       .select("id")
       .single();
-    if (error) throw new Error(`${table}: ${error.message}`);
+    if (error) {
+      warnings.push(`${table}: ${error.message}`);
+      return undefined;
+    }
     const newId = (data as any)?.id as string | undefined;
     if (remap && oldId && newId) remap.set(oldId, newId);
     return newId;
   };
 
-  for (const r of bundle.data.event_types || []) await insertOne("event_types", r, remapEvent);
-  for (const r of bundle.data.customers || []) await insertOne("clients", r, remapClient);
-  for (const r of bundle.data.decorations || []) await insertOne("decorations", r, remapDecor);
-  for (const r of bundle.data.supplies || []) await insertOne("supplies", r, remapSupp);
+  // event_types is deprecated — silently skip if present in legacy bundles
+  if ((bundle.data as any).event_types?.length) {
+    warnings.push(`تم تجاهل جدول غير مستخدم: event_types (${(bundle.data as any).event_types.length} صف)`);
+  }
+
+  for (const r of bundle.data.customers || []) {
+    if (await insertOne("clients", r, remapClient)) okCustomers++;
+  }
+  for (const r of bundle.data.decorations || []) {
+    if (await insertOne("decorations", r, remapDecor)) okDecor++;
+  }
+  for (const r of bundle.data.supplies || []) {
+    if (await insertOne("supplies", r, remapSupp)) okSupp++;
+  }
 
   for (const b of bundle.data.bookings || []) {
     const items = b.items || { decorations: [], supplies: [] };
@@ -320,19 +361,22 @@ export async function importBundle(input: BackupBundle, mode: "merge" | "replace
     };
     const newId = await insertOne("bookings", row, remapBooking);
     if (!newId) continue;
+    okBookings++;
     for (const d of items.decorations || []) {
       const decoration_id = remapDecor.get(d.id);
-      if (!decoration_id) continue;
-      await supabase.from("booking_decorations").insert({
+      if (!decoration_id) { warnings.push(`booking_decorations: ديكور غير موجود (${d.id})`); continue; }
+      const { error } = await supabase.from("booking_decorations").insert({
         booking_id: newId, decoration_id, qty: Number(d.qty) || 1,
       });
+      if (error) warnings.push(`booking_decorations: ${error.message}`);
     }
     for (const s of items.supplies || []) {
       const supply_id = remapSupp.get(s.id);
-      if (!supply_id) continue;
-      await supabase.from("booking_supplies" as any).insert({
+      if (!supply_id) { warnings.push(`booking_supplies: مستلزم غير موجود (${s.id})`); continue; }
+      const { error } = await supabase.from("booking_supplies" as any).insert({
         booking_id: newId, supply_id, qty: Number(s.qty) || 1,
       });
+      if (error) warnings.push(`booking_supplies: ${error.message}`);
     }
   }
 
@@ -345,8 +389,9 @@ export async function importBundle(input: BackupBundle, mode: "merge" | "replace
     };
     const newId = await insertOne("invoices", row, remapInvoice);
     if (!newId) continue;
+    okInvoices++;
     for (const it of items) {
-      await supabase.from("invoice_items").insert({
+      const { error } = await supabase.from("invoice_items").insert({
         invoice_id: newId,
         name: it.name,
         qty: Number(it.qty) || 1,
@@ -354,6 +399,7 @@ export async function importBundle(input: BackupBundle, mode: "merge" | "replace
         line_total: Number(it.line_total) || (Number(it.qty) || 1) * (Number(it.unit_price) || 0),
         position: Number(it.position) || 0,
       });
+      if (error) warnings.push(`invoice_items: ${error.message}`);
     }
   }
 
@@ -362,19 +408,34 @@ export async function importBundle(input: BackupBundle, mode: "merge" | "replace
       ...e,
       booking_id: e.booking_id ? remapBooking.get(e.booking_id) ?? null : null,
     };
-    await insertOne("expenses", row);
+    if (await insertOne("expenses", row)) okExpenses++;
   }
 
   for (const n of bundle.data.notifications || []) {
-    await insertOne("notifications", n);
+    if (await insertOne("notifications", n)) okNotifs++;
+  }
+
+  // Settings (profile / branding / booking settings) — UPDATE current user's profile
+  let settingsOk = false;
+  const settings = (bundle.data as any).settings;
+  if (settings && typeof settings === "object") {
+    const patch = clean(settings, ["id", "email", "phone", "phone_verified"]);
+    if (Object.keys(patch).length > 0) {
+      const { error } = await supabase.from("profiles").update(patch).eq("id", userData.user.id);
+      if (error) warnings.push(`settings: ${error.message}`);
+      else settingsOk = true;
+    }
   }
 
   return {
-    customers: remapClient.size,
-    bookings: remapBooking.size,
-    decorations: remapDecor.size,
-    supplies: remapSupp.size,
-    invoices: remapInvoice.size,
-    event_types: remapEvent.size,
+    customers: okCustomers,
+    bookings: okBookings,
+    decorations: okDecor,
+    supplies: okSupp,
+    invoices: okInvoices,
+    expenses: okExpenses,
+    notifications: okNotifs,
+    settings: settingsOk,
+    warnings,
   };
 }
