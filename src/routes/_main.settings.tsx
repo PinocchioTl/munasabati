@@ -305,7 +305,8 @@ function BackupSection() {
       const bundle = await exportAllData();
       downloadBundle(bundle);
       const counts = Object.entries(bundle.data)
-        .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.length : 0}`).join(" • ");
+        .filter(([, v]) => Array.isArray(v))
+        .map(([k, v]) => `${k}: ${(v as any[]).length}`).join(" • ");
       toast.success("تم تصدير النسخة الاحتياطية", { description: counts });
     } catch (e: any) {
       toast.error("فشل التصدير", { description: e.message });
@@ -343,8 +344,15 @@ function BackupSection() {
       setBusy("import");
       const res = await importBundle(pending, mode);
       await qc.invalidateQueries();
-      toast.success(mode === "replace" ? "تم استبدال البيانات" : "تم دمج البيانات",
-        { description: `حجوزات: ${res.bookings} • زبائن: ${res.customers} • ديكورات: ${res.decorations} • مستلزمات: ${res.supplies} • فواتير: ${res.invoices}` });
+      const summary = `زبائن: ${res.customers} • حجوزات: ${res.bookings} • ديكورات: ${res.decorations} • مستلزمات: ${res.supplies} • فواتير: ${res.invoices} • أرباح: ${res.expenses} • إشعارات: ${res.notifications}${res.settings ? " • تم استرجاع الإعدادات" : ""}`;
+      toast.success(mode === "replace" ? "تم استبدال البيانات" : "تم دمج البيانات", { description: summary });
+      if (res.warnings.length) {
+        toast.warning(`${res.warnings.length} تحذير أثناء الاستيراد`, {
+          description: res.warnings.slice(0, 5).join("\n") + (res.warnings.length > 5 ? `\n…و ${res.warnings.length - 5} أخرى` : ""),
+          duration: 8000,
+        });
+        console.warn("[Import warnings]", res.warnings);
+      }
       setPending(null);
     } catch (e: any) {
       toast.error("فشل الاستيراد", { description: e.message });
