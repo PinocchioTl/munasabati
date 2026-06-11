@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthShell, Field, inputCls } from "@/components/AuthShell";
 import { Button } from "@/components/ui-bits";
+import { recordLoginAttempt } from "@/lib/login-attempts.functions";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -12,9 +13,13 @@ export const Route = createFileRoute("/login")({
 
 async function logAttempt(identifier: string, success: boolean, error?: string) {
   try {
-    await supabase.from("login_attempts").insert({
-      identifier, method: "email", success, error_message: error ?? null,
-      user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+    await recordLoginAttempt({
+      data: {
+        identifier,
+        success,
+        error_message: error ?? null,
+        user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+      },
     });
   } catch {}
 }
