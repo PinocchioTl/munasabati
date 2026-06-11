@@ -1,0 +1,1 @@
+CREATE POLICY "booking_requests_insert_own" ON public.booking_requests FOR INSERT TO authenticated WITH CHECK (owner_id = auth.uid());
