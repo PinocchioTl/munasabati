@@ -17,10 +17,10 @@ export interface Branding {
 const DEFAULTS: Branding = {
   companyName: "Munasabati",
   logoUrl: logoAsset,
-  primaryColor: "#D4AF37",
-  secondaryColor: "#111827",
-  accentColor: "#2563EB",
-  backgroundColor: "#F9FAFB",
+  primaryColor: "#C6A75E",
+  secondaryColor: "#1F2A44",
+  accentColor: "#C6A75E",
+  backgroundColor: "#E8DCC8",
 };
 
 interface Ctx {
