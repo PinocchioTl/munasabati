@@ -781,6 +781,15 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      log_audit: {
+        Args: {
+          _action: string
+          _entity?: string
+          _entity_id?: string
+          _metadata?: Json
+        }
+        Returns: undefined
+      }
       recalc_client: { Args: { c_id: string }; Returns: undefined }
       recalc_decoration: { Args: { dec_id: string }; Returns: undefined }
       recalc_supply: { Args: { sup_id: string }; Returns: undefined }

@@ -22,13 +22,11 @@ export function useIsAdmin() {
 export async function logAudit(action: string, entity?: string, entityId?: string, metadata?: Record<string, unknown>) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-  await supabase.from("audit_log").insert({
-    user_id: user.id,
-    user_email: user.email,
-    action,
-    entity: entity ?? null,
-    entity_id: entityId ?? null,
-    metadata: (metadata ?? {}) as never,
+  await supabase.rpc("log_audit", {
+    _action: action,
+    _entity: entity,
+    _entity_id: entityId,
+    _metadata: (metadata ?? {}) as never,
   });
 }
 
