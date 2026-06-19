@@ -583,13 +583,11 @@ export const useUpdateSupply = () => {
           }
         }
         if (Object.keys(changes).length) {
-          await supabase.from("audit_log").insert({
-            action: "supply.update",
-            entity: "supply",
-            entity_id: input.id,
-            user_id: u.user?.id,
-            user_email: u.user?.email,
-            metadata: { changes, name },
+          await supabase.rpc("log_audit", {
+            _action: "supply.update",
+            _entity: "supply",
+            _entity_id: input.id,
+            _metadata: { changes, name } as never,
           });
         }
       } catch { /* ignore audit failure */ }
